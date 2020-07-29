@@ -45,6 +45,7 @@
 #include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/utility/basedefinitions.h"
 #include "gromacs/utility/real.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 
 struct ForceProviders;
 
@@ -296,6 +297,9 @@ struct t_forcerec { // NOLINT (clang-analyzer-optin.performance.Padding)
 
     /* Limit for printing large forces, negative is don't print */
     real print_force;
+
+    /* Force Analysis Class */
+    class ForceAnalysis *FA;
 
     /* coarse load balancing time measurement */
     double t_fnbf;

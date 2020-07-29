@@ -44,6 +44,7 @@
 #ifndef _nbnxn_kernel_cpu_h
 #define _nbnxn_kernel_cpu_h
 
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/math/vectypes.h"
 #include "gromacs/utility/real.h"
 
@@ -76,6 +77,8 @@ nbnxn_kernel_cpu(nonbonded_verlet_group_t  *nbvg,
                  int                        clearF,
                  real                      *fshift,
                  real                      *vCoulomb,
-                 real                      *vVdw);
+                 real                      *vVdw,
+                 std::vector<int>           cellInv,
+                 ForceAnalysis             *FA);
 
 #endif

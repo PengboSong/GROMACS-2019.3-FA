@@ -97,6 +97,11 @@ static const int tpss[] =
 };
 #define NTPSS asize(tpss)
 
+static const int tfafmt[] = {
+    efFOR
+};
+#define NTFAFMT asize(tfafmt)
+
 typedef struct // NOLINT(clang-analyzer-optin.performance.Padding)
 {
     int         ftype;
@@ -156,6 +161,7 @@ static const t_deffile deffile[efNR] =
     { eftASC, ".edi", "sam",    nullptr, "ED sampling input"},
     { eftASC, ".cub", "pot",  nullptr, "Gaussian cube file" },
     { eftASC, ".xpm", "root", nullptr, "X PixMap compatible matrix file" },
+    { eftASC, ".for", "fa", nullptr, "Force original data output file for Force Analysis" },
     { eftASC, "", "rundir", nullptr, "Run directory" }
 };
 

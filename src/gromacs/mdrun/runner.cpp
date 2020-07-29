@@ -549,6 +549,8 @@ int Mdrunner::mdrunner()
 
     std::unique_ptr<t_state> globalState;
 
+    std::shared_ptr<ForceAnalysis> ptr_FA;
+
     if (SIMMASTER(cr))
     {
         /* Only the master rank has the global state */
@@ -570,6 +572,8 @@ int Mdrunner::mdrunner()
             }
             globalState->flags &= ~(1 << estV);
         }
+
+        ptr_fda = std::make_shared<ForceAnalysis>();
 
         if (inputrec->cutoff_scheme != ecutsVERLET)
         {
@@ -1237,6 +1241,8 @@ int Mdrunner::mdrunner()
                       useGpuForBonded,
                       FALSE,
                       pforce);
+
+        fr->FA = ptr_FA.get();
 
         /* Initialize the mdAtoms structure.
          * mdAtoms is not filled with atom data,

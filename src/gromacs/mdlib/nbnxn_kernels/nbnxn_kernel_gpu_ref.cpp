@@ -64,10 +64,12 @@ nbnxn_kernel_gpu_ref(const nbnxn_pairlist_t     *nbl,
                      rvec                       *shift_vec,
                      int                         force_flags,
                      int                         clearF,
-                     real  *                     f,
-                     real  *                     fshift,
-                     real  *                     Vc,
-                     real  *                     Vvdw)
+                     real                       *f,
+                     real                       *fshift,
+                     real                       *Vc,
+                     real                       *Vvdw,
+                     std::vector<int>            cellInv,
+                     ForceAnalysis              *FA)
 {
     const nbnxn_sci_t  *nbln;
     const real         *x;
@@ -109,6 +111,8 @@ nbnxn_kernel_gpu_ref(const nbnxn_pairlist_t     *nbl,
 
     int                 npair_tot, npair;
     int                 nhwu, nhwu_pruned;
+
+    real                pf_coul, pf_vdw;
 
     if (nbl->na_ci != c_clSize)
     {
@@ -272,7 +276,8 @@ nbnxn_kernel_gpu_ref(const nbnxn_pairlist_t     *nbl,
                                 {
                                     /* Reaction-field */
                                     krsq  = iconst->k_rf*rsq;
-                                    fscal = qq*(int_bit*rinv - 2*krsq)*rinvsq;
+                                    pf_coul = qq*(int_bit*rinv - 2*krsq)*rinvsq;
+                                    fscal = pf_coul;
                                     if (bEner)
                                     {
                                         vcoul = qq*(int_bit*rinv + krsq - iconst->c_rf);
@@ -287,13 +292,16 @@ nbnxn_kernel_gpu_ref(const nbnxn_pairlist_t     *nbl,
 
                                     fexcl = (1 - eps)*Ftab[n0] + eps*Ftab[n0+1];
 
-                                    fscal = qq*(int_bit*rinvsq - fexcl)*rinv;
+                                    pf_coul = qq*(int_bit*rinvsq - fexcl)*rinv;
+                                    fscal = pf_coul;
 
                                     if (bEner)
                                     {
                                         vcoul = qq*((int_bit - std::erf(iconst->ewaldcoeff_q*r))*rinv - int_bit*iconst->sh_ewald);
                                     }
                                 }
+
+                                FA->add_nonbonded_coulomb(cellInv[ia], cellInv[ja], pf_coul, dx, dy, dz);
 
                                 if (rsq < rvdw2)
                                 {
@@ -306,7 +314,10 @@ nbnxn_kernel_gpu_ref(const nbnxn_pairlist_t     *nbl,
                                     rinvsix   = int_bit*rinvsq*rinvsq*rinvsq;
                                     Vvdw_disp = c6*rinvsix;
                                     Vvdw_rep  = c12*rinvsix*rinvsix;
-                                    fscal    += (Vvdw_rep - Vvdw_disp)*rinvsq;
+
+                                    pf_vdw    = (Vvdw_rep - Vvdw_disp)*rinvsq;
+                                    fscal    += pf_vdw;
+                                    FA->add_nonbonded_lj(cellInv[ia], cellInv[ja], pf_vdw, dx, dy, dz);
 
                                     if (bEner)
                                     {

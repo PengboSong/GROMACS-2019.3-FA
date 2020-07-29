@@ -77,7 +77,7 @@
 
 #ifdef CALC_COULOMB
             real qq;
-            real fcoul;
+            real fcoul, fvdw;
 #ifdef CALC_COUL_TAB
             real rs, frac;
             int  ri;
@@ -346,17 +346,31 @@
             if (i < UNROLLI/2)
 #endif
             {
-                fscal = frLJ*rinvsq + fcoul;
+                fvdw = frLJ*rinvsq;
+                fscal = fvdw + fcoul;
                 /* 2 flops for scalar LJ+Coulomb force */
+
+#ifdef CALC_ENERGIES
+                fda->add_nonbonded(cellInv[ai], cellInv[aj], fcoul, fvdw, dx, dy, dz);
+#endif
             }
 #ifdef HALF_LJ
             else
             {
                 fscal = fcoul;
+
+#ifdef CALC_ENERGIES
+                fda->add_nonbonded_coulomb(cellInv[ai], cellInv[aj], fcoul, dx, dy, dz);
+#endif
             }
 #endif
 #else
-            fscal = frLJ*rinvsq;
+            fvdw = frLJ*rinvsq;
+            fscal = fvdw;
+
+#ifdef CALC_ENERGIES
+            fda->add_nonbonded_lj(cellInv[ai], cellInv[aj], fvdw, dx, dy, dz);
+#endif
 #endif
             fx = fscal*dx;
             fy = fscal*dy;

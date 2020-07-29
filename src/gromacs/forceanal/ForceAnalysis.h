@@ -67,13 +67,13 @@ public:
 
     ~ForceAnalysis();
 
-    void add_bond(int i, int j, rvec force);
+    void add_pairforce(int i, int j, InteractionType type, rvec fi);
 
-    void add_polar_bond(int i, int j, rvec force);
+    void add_nonbonded(int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz);
 
-    void add_14_interaction(int i, int j, rvec force);
+    void add_nonbonded_coulomb(int i, int j, real pf_coul, real dx, real dy, real dz);
 
-    void add_nonbonded(int i, int j, real pf_coul, real pf_lj, real dx, real dy, real dz);
+    void add_nonbonded_lj(int i, int j, real pf_vdw, real dx, real dy, real dz);
 
     void add_angle(int ai, int aj, int ak, rvec f_i, rvec f_j, rvec f_k);
 
@@ -87,4 +87,4 @@ private:
     std::ofstream result_file;
 
     AtomForce forces;
-}
+};

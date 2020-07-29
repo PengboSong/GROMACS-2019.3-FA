@@ -33,6 +33,8 @@
  * the research papers on the package. Check out http://www.gromacs.org.
  */
 
+#include "gromacs/forceanal/ForceAnalysis.h"
+
 #define UNROLLI    NBNXN_CPU_CLUSTER_I_SIZE
 #define UNROLLJ    NBNXN_CPU_CLUSTER_I_SIZE
 
@@ -96,7 +98,9 @@ NBK_FUNC_NAME(_VgrpF) // NOLINT(misc-definitions-in-headers)
  const interaction_const_t  *ic,
  rvec                       *shift_vec,
  real                       *f,
- real gmx_unused            *fshift
+ real gmx_unused            *fshift,
+ int                        *cellInv,
+ ForceAnalysis              *FA
 #ifdef CALC_ENERGIES
  ,
  real                       *Vvdw,

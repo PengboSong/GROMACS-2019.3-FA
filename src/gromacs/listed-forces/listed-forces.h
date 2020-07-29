@@ -69,6 +69,7 @@
 #include "gromacs/math/vectypes.h"
 #include "gromacs/topology/ifunc.h"
 #include "gromacs/utility/basedefinitions.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 
 struct gmx_enerdata_t;
 struct gmx_grppairener_t;
@@ -96,7 +97,8 @@ using BondedFunction = real(*)(int nbonds, const t_iatom iatoms[],
                                const t_pbc *pbc, const t_graph *g,
                                real lambda, real *dvdlambda,
                                const t_mdatoms *md, t_fcdata *fcd,
-                               int *ddgatindex);
+                               int *ddgatindex,
+                               ForceAnalysis *FA);
 
 //! Getter for finding a callable CPU function to compute an \c ftype interaction.
 BondedFunction bondedFunction(int ftype);

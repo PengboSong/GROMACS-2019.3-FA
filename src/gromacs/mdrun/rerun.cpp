@@ -63,6 +63,7 @@
 #include "gromacs/ewald/pme.h"
 #include "gromacs/ewald/pme-load-balancing.h"
 #include "gromacs/fileio/trxio.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/network.h"
 #include "gromacs/gmxlib/nrnb.h"
 #include "gromacs/gpu_utils/gpu_utils.h"
@@ -589,6 +590,8 @@ void gmx::Integrator::do_rerun()
                      ddOpenBalanceRegion, ddCloseBalanceRegion);
         }
 
+        fr->FA->write_detailed_forces();
+
         /* Now we have the energies and forces corresponding to the
          * coordinates at time t.
          */
@@ -749,6 +752,8 @@ void gmx::Integrator::do_rerun()
 
     /* Stop measuring walltime */
     walltime_accounting_end_time(walltime_accounting);
+
+    fr->FA->write_detailed_forces();
 
     if (MASTER(cr))
     {

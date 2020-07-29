@@ -362,6 +362,8 @@ do_pairs_general(int ftype, int nbonds,
     real             LFC[2], LFV[2], DLF[2], lfac_coul[2], lfac_vdw[2], dlfac_coul[2], dlfac_vdw[2];
     real             qqB, c6B, c12B, sigma2_def, sigma2_min;
 
+    ForceAnalysis *FA = fr->FA;
+
     switch (ftype)
     {
         case F_LJ14:
@@ -514,6 +516,10 @@ do_pairs_general(int ftype, int nbonds,
         rvec_inc(f[ai], dx);
         rvec_dec(f[aj], dx);
 
+        if (FA)
+        {
+            FA->add_pairforce(ai, aj, InteractionType::Interact_14, dx);
+        }
         if (g)
         {
             /* Correct the shift forces using the graph */

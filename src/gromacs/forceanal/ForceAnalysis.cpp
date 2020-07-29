@@ -22,35 +22,38 @@ ForceAnalysis::~ForceAnalysis()
     result_file.close();
 }
 
-void ForceAnalysis::add_bond(int i, int j, rvec force)
+void ForceAnalysis::add_pairforce(int i, int j, InteractionType type, rvec fi)
 {
-    forces.add(i, InteractionType::Interact_BOND, force);
-    forces.add(j, InteractionType::Interact_BOND, force);
+    rvec fj;
+    fj[0] = -fi[0];
+    fj[1] = -fi[1];
+    fj[2] = -fi[2];
+    forces.add(i, type, fi);
+    forces.add(j, type, fj);
 }
 
-void ForceAnalysis::add_polar_bond(int i, int j, rvec force)
+void ForceAnalysis::add_nonbonded(int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz)
 {
-    forces.add(i, InteractionType::Interact_BOND, force);
-    forces.add(j, InteractionType::Interact_BOND, force);
+    add_nonbonded_coulomb(i, j, pf_coul, dx, dy, dz);
+    add_nonbonded_lj(i, j, pf_vdw, dx, dy, dz);
 }
 
-void ForceAnalysis::add_14_interaction(int i, int j, rvec force)
+void ForceAnalysis::add_nonbonded_coulomb(int i, int j, real pf_coul, real dx, real dy, real dz)
 {
-    forces.add(i, InteractionType::Interact_BOND, force);
-    forces.add(j, InteractionType::Interact_BOND, force);
-}
-
-void ForceAnalysis::add_nonbonded(int i, int j, real pf_coul, real pf_lj, real dx, real dy, real dz)
-{
-    rvec coul_force, lj_force;
+    rvec coul_force;
     coul_force[0] = dx * pf_coul;
     coul_force[1] = dy * pf_coul;
     coul_force[2] = dz * pf_coul;
-    lj_force[0] = dx * pf_coul;
-    lj_force[1] = dy * pf_coul;
-    lj_force[2] = dz * pf_coul;
-    forces.add(i, InteractionType::Interact_COULOMB, coul_force);
-    forces.add(j, InteractionType::Interact_LJ, lj_force);
+    add_pairforce(i, j, InteractionType::Interact_COULOMB, coul_force);
+}
+
+void ForceAnalysis::add_nonbonded_lj(int i, int j, real pf_vdw, real dx, real dy, real dz)
+{
+    rvec lj_force;
+    lj_force[0] = dx * pf_vdw;
+    lj_force[1] = dy * pf_vdw;
+    lj_force[2] = dz * pf_vdw;
+    add_pairforce(i, j, InteractionType::Interact_LJ, lj_force);
 }
 
 void ForceAnalysis::add_angle(int ai, int aj, int ak, rvec f_i, rvec f_j, rvec f_k)
@@ -87,4 +90,5 @@ void ForceAnalysis::write_detailed_forces()
         result_file.write((char*)&fy, sizeof(real));
         result_file.write((char*)&fz, sizeof(real));
     }
+    forces.detailed_forces.clear();
 }

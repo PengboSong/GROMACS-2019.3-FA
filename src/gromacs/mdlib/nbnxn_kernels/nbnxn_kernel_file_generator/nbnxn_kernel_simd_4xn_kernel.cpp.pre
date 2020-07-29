@@ -62,6 +62,8 @@ void
 {6}rvec                      gmx_unused *shift_vec,
 {6}real                      gmx_unused *f,
 {6}real                      gmx_unused *fshift,
+{6}int                       gmx_unused *cellInv,
+{6}ForceAnalysis             gmx_unused *FA,
 {6}real                      gmx_unused *Vvdw,
 {6}real                      gmx_unused *Vc)
 #else /* CALC_ENERGIES */
@@ -71,7 +73,9 @@ void
 {6}const interaction_const_t gmx_unused *ic,
 {6}rvec                      gmx_unused *shift_vec,
 {6}real                      gmx_unused *f,
-{6}real                      gmx_unused *fshift)
+{6}real                      gmx_unused *fshift,
+{6}int                       gmx_unused *cellInv,
+{6}ForceAnalysis             gmx_unused *FA)
 #endif /* CALC_ENERGIES */
 #ifdef {0}
 #include "gromacs/mdlib/nbnxn_kernels/simd_4xn/nbnxn_kernel_simd_4xn_outer.h"
