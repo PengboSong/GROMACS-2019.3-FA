@@ -351,7 +351,7 @@
                 /* 2 flops for scalar LJ+Coulomb force */
 
 #ifdef CALC_ENERGIES
-                fda->add_nonbonded(cellInv[ai], cellInv[aj], fcoul, fvdw, dx, dy, dz);
+                FA->add_nonbonded(cellInv[ai], cellInv[aj], fcoul, fvdw, dx, dy, dz);
 #endif
             }
 #ifdef HALF_LJ
@@ -360,16 +360,15 @@
                 fscal = fcoul;
 
 #ifdef CALC_ENERGIES
-                fda->add_nonbonded_coulomb(cellInv[ai], cellInv[aj], fcoul, dx, dy, dz);
+                FA->add_nonbonded_coulomb(cellInv[ai], cellInv[aj], fcoul, dx, dy, dz);
 #endif
             }
 #endif
 #else
-            fvdw = frLJ*rinvsq;
-            fscal = fvdw;
+            fscal = frLJ*rinvsq;
 
 #ifdef CALC_ENERGIES
-            fda->add_nonbonded_lj(cellInv[ai], cellInv[aj], fvdw, dx, dy, dz);
+            FA->add_nonbonded_vdw(cellInv[ai], cellInv[aj], fscal, dx, dy, dz);
 #endif
 #endif
             fx = fscal*dx;

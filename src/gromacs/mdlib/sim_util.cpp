@@ -453,7 +453,9 @@ static void do_nb_verlet(const t_forcerec *fr,
                              enerd->grpp.ener[egCOULSR],
                              fr->bBHAM ?
                              enerd->grpp.ener[egBHAMSR] :
-                             enerd->grpp.ener[egLJSR]);
+                             enerd->grpp.ener[egLJSR],
+                             fr->nbv->nbs->a,
+                             fr->FA);
             break;
 
         case nbnxnk8x8x8_GPU:
@@ -471,7 +473,9 @@ static void do_nb_verlet(const t_forcerec *fr,
                                  enerd->grpp.ener[egCOULSR],
                                  fr->bBHAM ?
                                  enerd->grpp.ener[egBHAMSR] :
-                                 enerd->grpp.ener[egLJSR]);
+                                 enerd->grpp.ener[egLJSR],
+                                 fr->nbv->nbs->a,
+                                 fr->FA);
             break;
 
         default:
