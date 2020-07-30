@@ -54,6 +54,8 @@
 
 #include <algorithm>
 
+#include "gromacs/forceanal/InteractionType.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/listed-forces/pairs.h"
 #include "gromacs/math/functions.h"
 #include "gromacs/math/units.h"
@@ -200,7 +202,7 @@ real morse_bonds(int nbonds,
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }                                         /*  83 TOTAL    */
     return vtot;
@@ -270,7 +272,7 @@ real cubic_bonds(int nbonds,
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }                                         /*  54 TOTAL    */
     return vtot;
@@ -346,7 +348,7 @@ real FENE_bonds(int nbonds,
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }                                         /*  58 TOTAL    */
     return vtot;
@@ -435,7 +437,7 @@ real bonds(int nbonds,
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }               /* 59 TOTAL	*/
     return vtot;
@@ -536,7 +538,7 @@ real restraint_bonds(int nbonds,
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }                   /* 59 TOTAL	*/
 
@@ -596,7 +598,7 @@ real polarize(int nbonds,
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_POLAR, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pf_forcevector);
         }
     }               /* 59 TOTAL	*/
     return vtot;
@@ -664,7 +666,7 @@ real anharm_polarize(int nbonds,
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_POLAR, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pf_forcevector);
         }
     }               /* 72 TOTAL	*/
     return vtot;
@@ -778,7 +780,7 @@ real water_pol(int nbonds,
 
             if (FA)
             {
-                FA->add_pairforce(ai, aj, InteractionType::Interact_POLAR, pf_forcevector);
+                FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pf_forcevector);
             }
         }
     }
@@ -816,7 +818,7 @@ static real do_1_thole(const rvec xi, const rvec xj, rvec fi, rvec fj,
 
     if (FA)
     {
-        FA->add_pairforce(ai, aj, InteractionType::Interact_POLAR, pf_forcevector);
+        FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pf_forcevector);
     }
 
     return v0*v1; /* 1 */
@@ -1300,7 +1302,7 @@ real urey_bradley(int nbonds,
         }
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }
     return vtot;
@@ -3471,7 +3473,7 @@ real g96bonds(int nbonds,
         }
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }               /* 44 TOTAL	*/
     return vtot;
@@ -3827,7 +3829,7 @@ real tab_bonds(int nbonds,
         }
         if (FA)
         {
-            FA->add_pairforce(ai, aj, InteractionType::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }               /* 62 TOTAL	*/
     return vtot;

@@ -317,7 +317,7 @@ nbnxn_kernel_gpu_ref(const nbnxn_pairlist_t     *nbl,
 
                                     pf_vdw    = (Vvdw_rep - Vvdw_disp)*rinvsq;
                                     fscal    += pf_vdw;
-                                    FA->add_nonbonded_lj(cellInv[ia], cellInv[ja], pf_vdw, dx, dy, dz);
+                                    FA->add_nonbonded_vdw(cellInv[ia], cellInv[ja], pf_vdw, dx, dy, dz);
 
                                     if (bEner)
                                     {
