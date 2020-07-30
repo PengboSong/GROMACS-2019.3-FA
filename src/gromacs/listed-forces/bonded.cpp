@@ -780,7 +780,7 @@ real water_pol(int nbonds,
 
             if (FA)
             {
-                FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pf_forcevector);
+                FA->add_pairforce(aS, aD, ForceAnal::Interact_POLAR, pf_forcevector);
             }
         }
     }
@@ -790,7 +790,7 @@ real water_pol(int nbonds,
 static real do_1_thole(const rvec xi, const rvec xj, rvec fi, rvec fj,
                        const t_pbc *pbc, real qq,
                        rvec fshift[], real afac,
-                       ForceAnalysis *FA)
+                       int ai, int aj, ForceAnalysis *FA)
 {
     rvec r12, pf_forcevector;
     real r12sq, r12_1, r12bar, v0, v1, fscal, ebar, fff;
@@ -853,10 +853,10 @@ real thole_pol(int nbonds,
         al2   = forceparams[type].thole.alpha2;
         qq    = q1*q2;
         afac  = a*gmx::invsixthroot(al1*al2);
-        V    += do_1_thole(x[a1], x[a2], f[a1], f[a2], pbc, qq, fshift, afac, FA);
-        V    += do_1_thole(x[da1], x[a2], f[da1], f[a2], pbc, -qq, fshift, afac, FA);
-        V    += do_1_thole(x[a1], x[da2], f[a1], f[da2], pbc, -qq, fshift, afac, FA);
-        V    += do_1_thole(x[da1], x[da2], f[da1], f[da2], pbc, qq, fshift, afac, FA);
+        V    += do_1_thole(x[a1], x[a2], f[a1], f[a2], pbc, qq, fshift, afac, a1, a2, FA);
+        V    += do_1_thole(x[da1], x[a2], f[da1], f[a2], pbc, -qq, fshift, afac, a1, a2, FA);
+        V    += do_1_thole(x[a1], x[da2], f[a1], f[da2], pbc, -qq, fshift, afac, a1, a2, FA);
+        V    += do_1_thole(x[da1], x[da2], f[da1], f[da2], pbc, qq, fshift, afac, a1, a2, FA);
     }
     /* 290 flops */
     return V;
@@ -889,7 +889,7 @@ real angles(int nbonds,
             ForceAnalysis *FA)
 {
     int  i, ai, aj, ak, t1, t2, type;
-    rvec r_ij, r_kj, pf_forcevector;
+    rvec r_ij, r_kj;
     real cos_theta, cos_theta2, theta, dVdt, va, vtot;
     ivec jt, dt_ij, dt_kj;
 
@@ -2313,7 +2313,7 @@ static real low_angres(int nbonds,
                        const t_pbc *pbc, const t_graph *g,
                        real lambda, real *dvdlambda,
                        gmx_bool bZAxis,
-                       ForceAnalysis *FA)
+                       ForceAnalysis gmx_unused *FA)
 {
     int  i, m, type, ai, aj, ak, al;
     int  t1, t2;
@@ -2540,7 +2540,7 @@ real restrangles(int nbonds,
                  real gmx_unused lambda, real gmx_unused *dvdlambda,
                  const t_mdatoms gmx_unused *md, t_fcdata gmx_unused *fcd,
                  int gmx_unused *global_atom_index,
-                 ForceAnalysis *FA)
+                 ForceAnalysis gmx_unused *FA)
 {
     int  i, d, ai, aj, ak, type, m;
     int  t1, t2;
@@ -2644,7 +2644,7 @@ real restrdihs(int nbonds,
                real gmx_unused lambda, real gmx_unused *dvlambda,
                const t_mdatoms gmx_unused *md, t_fcdata gmx_unused *fcd,
                int gmx_unused *global_atom_index,
-               ForceAnalysis *FA)
+               ForceAnalysis gmx_unused *FA)
 {
     int  i, d, type, ai, aj, ak, al;
     rvec f_i, f_j, f_k, f_l;
@@ -2753,7 +2753,7 @@ real cbtdihs(int nbonds,
              real gmx_unused lambda, real gmx_unused *dvdlambda,
              const t_mdatoms gmx_unused *md, t_fcdata gmx_unused *fcd,
              int gmx_unused *global_atom_index,
-             ForceAnalysis *FA)
+             ForceAnalysis gmx_unused *FA)
 {
     int  type, ai, aj, ak, al, i, d;
     int  t1, t2, t3;
@@ -3012,7 +3012,7 @@ cmap_dihs(int nbonds,
           real gmx_unused lambda, real gmx_unused *dvdlambda,
           const t_mdatoms gmx_unused *md, t_fcdata gmx_unused *fcd,
           int  gmx_unused *global_atom_index,
-          ForceAnalysis *FA)
+          ForceAnalysis gmx_unused *FA)
 {
     int         i, n;
     int         ai, aj, ak, al, am;
@@ -3579,7 +3579,7 @@ real cross_bond_bond(int nbonds,
     int  i, ai, aj, ak, type, m, t1, t2;
     rvec r_ij, r_kj;
     real vtot, vrr, s1, s2, r1, r2, r1e, r2e, krr;
-    rvec f_i, f_j, f_k, pf_forcevector;
+    rvec f_i, f_j, f_k;
     ivec jt, dt_ij, dt_kj;
 
     vtot = 0.0;

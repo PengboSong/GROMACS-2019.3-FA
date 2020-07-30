@@ -37,6 +37,8 @@ public:
 
     void add_dihedral(int i, int j, int k, int l, rvec f_i, rvec f_j, rvec f_k, rvec f_l);
 
+    void write_frame();
+
 private:
     std::string result_filename = "result.bin";
 

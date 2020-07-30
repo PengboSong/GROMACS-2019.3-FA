@@ -66,3 +66,8 @@ void ForceAnalysis::add_dihedral(int i, int j, int k, int l, rvec f_i, rvec f_j,
     forces.add_detailed_force(k, -1, ForceAnal::Interact_DIHEDRAL, f_k);
     forces.add_detailed_force(l, -1, ForceAnal::Interact_DIHEDRAL, f_l);
 }
+
+void ForceAnalysis::write_frame()
+{
+    forces.write_detailed_forces();
+}

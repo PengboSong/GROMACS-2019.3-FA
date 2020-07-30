@@ -518,7 +518,7 @@ do_pairs_general(int ftype, int nbonds,
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_14, dx);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_1_4, dx);
         }
         if (g)
         {

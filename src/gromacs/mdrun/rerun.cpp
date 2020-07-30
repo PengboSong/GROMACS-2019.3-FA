@@ -590,7 +590,7 @@ void gmx::Integrator::do_rerun()
                      ddOpenBalanceRegion, ddCloseBalanceRegion);
         }
 
-        fr->FA->write_detailed_forces();
+        fr->FA->write_frame();
 
         /* Now we have the energies and forces corresponding to the
          * coordinates at time t.
@@ -753,7 +753,7 @@ void gmx::Integrator::do_rerun()
     /* Stop measuring walltime */
     walltime_accounting_end_time(walltime_accounting);
 
-    fr->FA->write_detailed_forces();
+    fr->FA->write_frame();
 
     if (MASTER(cr))
     {
