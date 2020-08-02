@@ -60,7 +60,7 @@ void FA_add_nonbonded(class ForceAnalysis *FA, int i, int j, real pf_coul, real 
 
 void FA_add_nonbonded_coulomb(class ForceAnalysis *FA, int i, int j, real pf_coul, real dx, real dy, real dz);
 
-void FA_add_nonbonded_vdw(class ForceAnalysis *FA, int i, int j, real pf_coul, real dx, real dy, real dz);
+void FA_add_nonbonded_vdw(class ForceAnalysis *FA, int i, int j, real pf_vdw, real dx, real dy, real dz);
 
 #ifdef __cplusplus
 }

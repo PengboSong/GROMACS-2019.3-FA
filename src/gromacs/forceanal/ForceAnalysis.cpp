@@ -74,3 +74,18 @@ void ForceAnalysis::write_frame()
 {
     forces.write_detailed_forces();
 }
+
+void FA_add_nonbonded(class ForceAnalysis *FA, int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz)
+{
+    FA->add_nonbonded(i, j, pf_coul, pf_vdw, dx, dy, dz);
+}
+
+void FA_add_nonbonded_coulomb(class ForceAnalysis *FA, int i, int j, real pf_coul, real dx, real dy, real dz)
+{
+    FA->add_nonbonded_coulomb(i, j, pf_coul, dx, dy, dz);
+}
+
+void FA_add_nonbonded_vdw(class ForceAnalysis *FA, int i, int j, real pf_vdw, real dx, real dy, real dz)
+{
+    FA->add_nonbonded_vdw(i, j, pf_vdw, dx, dy, dz);
+}
