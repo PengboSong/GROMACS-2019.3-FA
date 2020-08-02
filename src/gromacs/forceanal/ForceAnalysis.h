@@ -8,15 +8,16 @@
 #ifndef SRC_GROMACS_FORCEANAL_FORCEANALYSIS_H_
 #define SRC_GROMACS_FORCEANAL_FORCEANALYSIS_H_
 
+#include "gromacs/math/vectypes.h"
+#include "gromacs/utility/real.h"
+
+#ifdef __cplusplus
 #include <cstdint>
 #include <cstdio>
 #include <string>
 
-#include "gromacs/math/vectypes.h"
-#include "gromacs/utility/real.h"
 #include "InteractionType.h"
 #include "ForceData.h"
-
 
 class ForceAnalysis
 {
@@ -44,5 +45,25 @@ private:
 
     ForceAnal::ForceData forces;
 };
+
+#else
+
+struct ForceAnalysis {};
+
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void FA_add_nonbonded(class ForceAnalysis *FA, int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz);
+
+void FA_add_nonbonded_coulomb(class ForceAnalysis *FA, int i, int j, real pf_coul, real dx, real dy, real dz);
+
+void FA_add_nonbonded_vdw(class ForceAnalysis *FA, int i, int j, real pf_coul, real dx, real dy, real dz);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SRC_GROMACS_FORCEANAL_FORCEANALYSIS_H_ */

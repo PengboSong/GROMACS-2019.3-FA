@@ -5,7 +5,10 @@
  *      Author: Pengbo Song
  */
 
+#include "gromacs/math/vectypes.h"
+#include "gromacs/utility/real.h"
 #include "ForceAnalysis.h"
+#include "InteractionType.h"
 
 ForceAnalysis::ForceAnalysis()
  : forces(result_filename)

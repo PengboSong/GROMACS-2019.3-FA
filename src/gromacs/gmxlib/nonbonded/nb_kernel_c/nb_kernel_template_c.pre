@@ -43,6 +43,7 @@
 #include <math.h>
 
 #include "../nb_kernel.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/nrnb.h"
 /* #endif */
 
@@ -169,6 +170,8 @@ void
     /* #if 'PotentialSwitch' in [KERNEL_MOD_ELEC,KERNEL_MOD_VDW] */
     real             rswitch,swV3,swV4,swV5,swF2,swF3,swF4,d,d2,sw,dsw;
     /* #endif */
+
+    ForceAnalysis    *FA;
 
     x                = xx[0];
     f                = ff[0];
@@ -298,6 +301,8 @@ void
     swF4             = -30.0/(d*d*d*d*d);
     /*     #endif */
     /* #endif */
+
+    FA               = fr->FA;
 
     /* ## Keep track of the floating point operations we issue for reporting! */
     /* #define OUTERFLOPS 0 */
@@ -758,6 +763,17 @@ void
             f[j_coord_offset+DIM*{J}+XX] -= tx;
             f[j_coord_offset+DIM*{J}+YY] -= ty;
             f[j_coord_offset+DIM*{J}+ZZ] -= tz;
+
+            if (FA)
+            {
+                /*     #if 'electrostatics' in INTERACTION_FLAGS[I][J] and 'vdw' in INTERACTION_FLAGS[I][J] */
+                FA_add_nonbonded(FA, inr+{I}, jnr+{J}, felec, fvdw, dx{I}{J}, dy{I}{J}, dz{I}{J});
+                /*     #elif 'electrostatics' in INTERACTION_FLAGS[I][J] */
+                FA_add_nonbonded_coulomb(FA, inr+{I}, jnr+{J}, felec, dx{I}{J}, dy{I}{J}, dz{I}{J});
+                /*     #elif 'vdw' in INTERACTION_FLAGS[I][J] */
+                FA_add_nonbonded_vdw(FA, inr+{I}, jnr+{J}, fvdw, dx{I}{J}, dy{I}{J}, dz{I}{J});
+                /*     #endif */
+            }
 
             /*         #define INNERFLOPS INNERFLOPS+9 */
             /*     #endif */
