@@ -42,6 +42,7 @@
 #include <math.h>
 
 #include "../nb_kernel.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/nrnb.h"
 
 /*
@@ -88,6 +89,8 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_VF_c
     real             rt,vfeps,vftabscale,Y,F,Geps,Heps2,Fp,VV,FF;
     real             *vftab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -121,6 +124,8 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_VF_c
     /* When we use explicit cutoffs the value must be identical for elec and VdW, so use elec as an arbitrary choice */
     rcutoff          = fr->ic->rcoulomb;
     rcutoff2         = rcutoff*rcutoff;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -274,6 +279,11 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded(FA, inr+0, jnr+0, felec, fvdw, dx00, dy00, dz00);
+            }
+
             }
 
             /**************************
@@ -307,6 +317,11 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+0, felec, dx10, dy10, dz10);
+            }
+
             }
 
             /**************************
@@ -339,6 +354,11 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_VF_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+0, felec, dx20, dy20, dz20);
+            }
 
             }
 
@@ -431,6 +451,8 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_F_c
     real             rt,vfeps,vftabscale,Y,F,Geps,Heps2,Fp,VV,FF;
     real             *vftab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -464,6 +486,8 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_F_c
     /* When we use explicit cutoffs the value must be identical for elec and VdW, so use elec as an arbitrary choice */
     rcutoff          = fr->ic->rcoulomb;
     rcutoff2         = rcutoff*rcutoff;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -601,6 +625,11 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_F_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded(FA, inr+0, jnr+0, felec, fvdw, dx00, dy00, dz00);
+            }
+
             }
 
             /**************************
@@ -630,6 +659,11 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_F_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+0, felec, dx10, dy10, dz10);
+            }
+
             }
 
             /**************************
@@ -658,6 +692,11 @@ nb_kernel_ElecRFCut_VdwCSTab_GeomW3P1_F_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+0, felec, dx20, dy20, dz20);
+            }
 
             }
 

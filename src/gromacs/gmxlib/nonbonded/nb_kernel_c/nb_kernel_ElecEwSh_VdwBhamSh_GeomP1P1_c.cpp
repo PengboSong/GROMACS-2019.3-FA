@@ -42,6 +42,7 @@
 #include <math.h>
 
 #include "../nb_kernel.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/nrnb.h"
 
 /*
@@ -82,6 +83,8 @@ nb_kernel_ElecEwSh_VdwBhamSh_GeomP1P1_VF_c
     real             ewtabscale,eweps,sh_ewald,ewrt,ewtabhalfspace;
     real             *ewtab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -110,6 +113,8 @@ nb_kernel_ElecEwSh_VdwBhamSh_GeomP1P1_VF_c
 
     sh_vdw_invrcut6  = fr->ic->sh_invrc6;
     rvdw             = fr->ic->rvdw;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -228,6 +233,11 @@ nb_kernel_ElecEwSh_VdwBhamSh_GeomP1P1_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded(FA, inr+0, jnr+0, felec, fvdw, dx00, dy00, dz00);
+            }
+
             }
 
             /* Inner loop uses 111 flops */
@@ -301,6 +311,8 @@ nb_kernel_ElecEwSh_VdwBhamSh_GeomP1P1_F_c
     real             ewtabscale,eweps,sh_ewald,ewrt,ewtabhalfspace;
     real             *ewtab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -329,6 +341,8 @@ nb_kernel_ElecEwSh_VdwBhamSh_GeomP1P1_F_c
 
     sh_vdw_invrcut6  = fr->ic->sh_invrc6;
     rvdw             = fr->ic->rvdw;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -435,6 +449,11 @@ nb_kernel_ElecEwSh_VdwBhamSh_GeomP1P1_F_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded(FA, inr+0, jnr+0, felec, fvdw, dx00, dy00, dz00);
+            }
 
             }
 

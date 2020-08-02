@@ -42,6 +42,7 @@
 #include <math.h>
 
 #include "../nb_kernel.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/nrnb.h"
 
 /*
@@ -75,6 +76,8 @@ nb_kernel_ElecRFCut_VdwNone_GeomP1P1_VF_c
     real             velec,felec,velecsum,facel,crf,krf,krf2;
     real             *charge;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -95,6 +98,8 @@ nb_kernel_ElecRFCut_VdwNone_GeomP1P1_VF_c
     /* When we use explicit cutoffs the value must be identical for elec and VdW, so use elec as an arbitrary choice */
     rcutoff          = fr->ic->rcoulomb;
     rcutoff2         = rcutoff*rcutoff;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -189,6 +194,11 @@ nb_kernel_ElecRFCut_VdwNone_GeomP1P1_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+0, jnr+0, felec, dx00, dy00, dz00);
+            }
+
             }
 
             /* Inner loop uses 32 flops */
@@ -254,6 +264,8 @@ nb_kernel_ElecRFCut_VdwNone_GeomP1P1_F_c
     real             velec,felec,velecsum,facel,crf,krf,krf2;
     real             *charge;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -274,6 +286,8 @@ nb_kernel_ElecRFCut_VdwNone_GeomP1P1_F_c
     /* When we use explicit cutoffs the value must be identical for elec and VdW, so use elec as an arbitrary choice */
     rcutoff          = fr->ic->rcoulomb;
     rcutoff2         = rcutoff*rcutoff;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -360,6 +374,11 @@ nb_kernel_ElecRFCut_VdwNone_GeomP1P1_F_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+0, jnr+0, felec, dx00, dy00, dz00);
+            }
 
             }
 

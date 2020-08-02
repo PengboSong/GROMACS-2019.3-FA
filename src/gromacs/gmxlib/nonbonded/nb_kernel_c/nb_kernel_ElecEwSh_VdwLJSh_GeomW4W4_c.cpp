@@ -42,6 +42,7 @@
 #include <math.h>
 
 #include "../nb_kernel.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/nrnb.h"
 
 /*
@@ -103,6 +104,8 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
     real             ewtabscale,eweps,sh_ewald,ewrt,ewtabhalfspace;
     real             *ewtab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -154,6 +157,8 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
 
     sh_vdw_invrcut6  = fr->ic->sh_invrc6;
     rvdw             = fr->ic->rvdw;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -325,6 +330,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_vdw(FA, inr+0, jnr+0, fvdw, dx00, dy00, dz00);
+            }
+
             }
 
             /**************************
@@ -364,6 +374,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*1+XX] -= tx;
             f[j_coord_offset+DIM*1+YY] -= ty;
             f[j_coord_offset+DIM*1+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+1, felec, dx11, dy11, dz11);
+            }
 
             }
 
@@ -405,6 +420,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*2+YY] -= ty;
             f[j_coord_offset+DIM*2+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+2, felec, dx12, dy12, dz12);
+            }
+
             }
 
             /**************************
@@ -444,6 +464,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*3+XX] -= tx;
             f[j_coord_offset+DIM*3+YY] -= ty;
             f[j_coord_offset+DIM*3+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+3, felec, dx13, dy13, dz13);
+            }
 
             }
 
@@ -485,6 +510,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*1+YY] -= ty;
             f[j_coord_offset+DIM*1+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+1, felec, dx21, dy21, dz21);
+            }
+
             }
 
             /**************************
@@ -524,6 +554,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*2+XX] -= tx;
             f[j_coord_offset+DIM*2+YY] -= ty;
             f[j_coord_offset+DIM*2+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+2, felec, dx22, dy22, dz22);
+            }
 
             }
 
@@ -565,6 +600,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*3+YY] -= ty;
             f[j_coord_offset+DIM*3+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+3, felec, dx23, dy23, dz23);
+            }
+
             }
 
             /**************************
@@ -604,6 +644,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*1+XX] -= tx;
             f[j_coord_offset+DIM*1+YY] -= ty;
             f[j_coord_offset+DIM*1+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+3, jnr+1, felec, dx31, dy31, dz31);
+            }
 
             }
 
@@ -645,6 +690,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*2+YY] -= ty;
             f[j_coord_offset+DIM*2+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+3, jnr+2, felec, dx32, dy32, dz32);
+            }
+
             }
 
             /**************************
@@ -684,6 +734,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_VF_c
             f[j_coord_offset+DIM*3+XX] -= tx;
             f[j_coord_offset+DIM*3+YY] -= ty;
             f[j_coord_offset+DIM*3+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+3, jnr+3, felec, dx33, dy33, dz33);
+            }
 
             }
 
@@ -797,6 +852,8 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
     real             ewtabscale,eweps,sh_ewald,ewrt,ewtabhalfspace;
     real             *ewtab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -848,6 +905,8 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
 
     sh_vdw_invrcut6  = fr->ic->sh_invrc6;
     rvdw             = fr->ic->rvdw;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -1009,6 +1068,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_vdw(FA, inr+0, jnr+0, fvdw, dx00, dy00, dz00);
+            }
+
             }
 
             /**************************
@@ -1043,6 +1107,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*1+XX] -= tx;
             f[j_coord_offset+DIM*1+YY] -= ty;
             f[j_coord_offset+DIM*1+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+1, felec, dx11, dy11, dz11);
+            }
 
             }
 
@@ -1079,6 +1148,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*2+YY] -= ty;
             f[j_coord_offset+DIM*2+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+2, felec, dx12, dy12, dz12);
+            }
+
             }
 
             /**************************
@@ -1113,6 +1187,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*3+XX] -= tx;
             f[j_coord_offset+DIM*3+YY] -= ty;
             f[j_coord_offset+DIM*3+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+3, felec, dx13, dy13, dz13);
+            }
 
             }
 
@@ -1149,6 +1228,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*1+YY] -= ty;
             f[j_coord_offset+DIM*1+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+1, felec, dx21, dy21, dz21);
+            }
+
             }
 
             /**************************
@@ -1183,6 +1267,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*2+XX] -= tx;
             f[j_coord_offset+DIM*2+YY] -= ty;
             f[j_coord_offset+DIM*2+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+2, felec, dx22, dy22, dz22);
+            }
 
             }
 
@@ -1219,6 +1308,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*3+YY] -= ty;
             f[j_coord_offset+DIM*3+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+3, felec, dx23, dy23, dz23);
+            }
+
             }
 
             /**************************
@@ -1253,6 +1347,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*1+XX] -= tx;
             f[j_coord_offset+DIM*1+YY] -= ty;
             f[j_coord_offset+DIM*1+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+3, jnr+1, felec, dx31, dy31, dz31);
+            }
 
             }
 
@@ -1289,6 +1388,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*2+YY] -= ty;
             f[j_coord_offset+DIM*2+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+3, jnr+2, felec, dx32, dy32, dz32);
+            }
+
             }
 
             /**************************
@@ -1323,6 +1427,11 @@ nb_kernel_ElecEwSh_VdwLJSh_GeomW4W4_F_c
             f[j_coord_offset+DIM*3+XX] -= tx;
             f[j_coord_offset+DIM*3+YY] -= ty;
             f[j_coord_offset+DIM*3+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+3, jnr+3, felec, dx33, dy33, dz33);
+            }
 
             }
 

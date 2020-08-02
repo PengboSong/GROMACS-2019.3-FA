@@ -42,6 +42,7 @@
 #include <math.h>
 
 #include "../nb_kernel.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/nrnb.h"
 
 /*
@@ -91,6 +92,8 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_VF_c
     real             ewtabscale,eweps,sh_ewald,ewrt,ewtabhalfspace;
     real             *ewtab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -119,6 +122,8 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_VF_c
     iq2              = facel*charge[inr+2];
     iq3              = facel*charge[inr+3];
     vdwioffset0      = 3*nvdwtype*vdwtype[inr+0];
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -253,6 +258,11 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_vdw(FA, inr+0, jnr+0, fvdw, dx00, dy00, dz00);
+            }
+
             /**************************
              * CALCULATE INTERACTIONS *
              **************************/
@@ -289,6 +299,11 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_VF_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+0, felec, dx10, dy10, dz10);
+            }
 
             /**************************
              * CALCULATE INTERACTIONS *
@@ -327,6 +342,11 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+0, felec, dx20, dy20, dz20);
+            }
+
             /**************************
              * CALCULATE INTERACTIONS *
              **************************/
@@ -363,6 +383,11 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_VF_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+3, jnr+0, felec, dx30, dy30, dz30);
+            }
 
             /* Inner loop uses 184 flops */
         }
@@ -462,6 +487,8 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_F_c
     real             ewtabscale,eweps,sh_ewald,ewrt,ewtabhalfspace;
     real             *ewtab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -490,6 +517,8 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_F_c
     iq2              = facel*charge[inr+2];
     iq3              = facel*charge[inr+3];
     vdwioffset0      = 3*nvdwtype*vdwtype[inr+0];
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -616,6 +645,11 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_F_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_vdw(FA, inr+0, jnr+0, fvdw, dx00, dy00, dz00);
+            }
+
             /**************************
              * CALCULATE INTERACTIONS *
              **************************/
@@ -647,6 +681,11 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_F_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+1, jnr+0, felec, dx10, dy10, dz10);
+            }
 
             /**************************
              * CALCULATE INTERACTIONS *
@@ -680,6 +719,11 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_F_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+2, jnr+0, felec, dx20, dy20, dz20);
+            }
+
             /**************************
              * CALCULATE INTERACTIONS *
              **************************/
@@ -711,6 +755,11 @@ nb_kernel_ElecEw_VdwBham_GeomW4P1_F_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_coulomb(FA, inr+3, jnr+0, felec, dx30, dy30, dz30);
+            }
 
             /* Inner loop uses 160 flops */
         }

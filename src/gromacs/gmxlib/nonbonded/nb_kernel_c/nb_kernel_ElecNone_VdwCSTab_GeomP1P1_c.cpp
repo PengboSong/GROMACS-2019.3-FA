@@ -42,6 +42,7 @@
 #include <math.h>
 
 #include "../nb_kernel.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/nrnb.h"
 
 /*
@@ -80,6 +81,8 @@ nb_kernel_ElecNone_VdwCSTab_GeomP1P1_VF_c
     real             rt,vfeps,vftabscale,Y,F,Geps,Heps2,Fp,VV,FF;
     real             *vftab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -97,6 +100,8 @@ nb_kernel_ElecNone_VdwCSTab_GeomP1P1_VF_c
 
     vftab            = kernel_data->table_vdw->data;
     vftabscale       = kernel_data->table_vdw->scale;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -216,6 +221,11 @@ nb_kernel_ElecNone_VdwCSTab_GeomP1P1_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_vdw(FA, inr+0, jnr+0, fvdw, dx00, dy00, dz00);
+            }
+
             /* Inner loop uses 55 flops */
         }
         /* End of innermost loop */
@@ -284,6 +294,8 @@ nb_kernel_ElecNone_VdwCSTab_GeomP1P1_F_c
     real             rt,vfeps,vftabscale,Y,F,Geps,Heps2,Fp,VV,FF;
     real             *vftab;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -301,6 +313,8 @@ nb_kernel_ElecNone_VdwCSTab_GeomP1P1_F_c
 
     vftab            = kernel_data->table_vdw->data;
     vftabscale       = kernel_data->table_vdw->scale;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -406,6 +420,11 @@ nb_kernel_ElecNone_VdwCSTab_GeomP1P1_F_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_vdw(FA, inr+0, jnr+0, fvdw, dx00, dy00, dz00);
+            }
 
             /* Inner loop uses 47 flops */
         }

@@ -42,6 +42,7 @@
 #include <math.h>
 
 #include "../nb_kernel.h"
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/gmxlib/nrnb.h"
 
 /*
@@ -80,6 +81,8 @@ nb_kernel_ElecNone_VdwLJEw_GeomP1P1_VF_c
     real             ewclj,ewclj2,ewclj6,ewcljrsq,poly,exponent,sh_lj_ewald;
     real	     *vdwgridparam;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -99,6 +102,8 @@ nb_kernel_ElecNone_VdwLJEw_GeomP1P1_VF_c
     sh_lj_ewald	     = fr->ic->sh_lj_ewald;
     ewclj2           = ewclj*ewclj;
     ewclj6           = ewclj2*ewclj2*ewclj2;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -199,6 +204,11 @@ nb_kernel_ElecNone_VdwLJEw_GeomP1P1_VF_c
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
 
+            if (FA)
+            {
+                FA_add_nonbonded_vdw(FA, inr+0, jnr+0, fvdw, dx00, dy00, dz00);
+            }
+
             /* Inner loop uses 49 flops */
         }
         /* End of innermost loop */
@@ -267,6 +277,8 @@ nb_kernel_ElecNone_VdwLJEw_GeomP1P1_F_c
     real             ewclj,ewclj2,ewclj6,ewcljrsq,poly,exponent,sh_lj_ewald;
     real	     *vdwgridparam;
 
+    ForceAnalysis    *FA;
+
     x                = xx[0];
     f                = ff[0];
 
@@ -286,6 +298,8 @@ nb_kernel_ElecNone_VdwLJEw_GeomP1P1_F_c
     sh_lj_ewald	     = fr->ic->sh_lj_ewald;
     ewclj2           = ewclj*ewclj;
     ewclj6           = ewclj2*ewclj2*ewclj2;
+
+    FA               = fr->FA;
 
     outeriter        = 0;
     inneriter        = 0;
@@ -376,6 +390,11 @@ nb_kernel_ElecNone_VdwLJEw_GeomP1P1_F_c
             f[j_coord_offset+DIM*0+XX] -= tx;
             f[j_coord_offset+DIM*0+YY] -= ty;
             f[j_coord_offset+DIM*0+ZZ] -= tz;
+
+            if (FA)
+            {
+                FA_add_nonbonded_vdw(FA, inr+0, jnr+0, fvdw, dx00, dy00, dz00);
+            }
 
             /* Inner loop uses 44 flops */
         }
