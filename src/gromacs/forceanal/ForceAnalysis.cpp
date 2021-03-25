@@ -6,6 +6,8 @@
  */
 
 #include "gromacs/math/vectypes.h"
+#include "gromacs/math/vec.h"
+#include "gromacs/math/extended_vec.h"
 #include "gromacs/utility/real.h"
 #include "ForceAnalysis.h"
 #include "InteractionType.h"
@@ -21,14 +23,12 @@ ForceAnalysis::~ForceAnalysis()
     
 }
 
-void ForceAnalysis::add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec fi)
+void ForceAnalysis::add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij)
 {
-    rvec fj;
-    fj[0] = -fi[0];
-    fj[1] = -fi[1];
-    fj[2] = -fi[2];
-    forces.add_detailed_force(i, j, type, fi);
-    forces.add_detailed_force(j, i, type, fj);
+    rvec f_ji;
+    rvec_opp(f_ij, f_ji);
+    forces.add_detailed_force(i, j, type, f_ij);
+    forces.add_detailed_force(j, i, type, f_ji);
 }
 
 void ForceAnalysis::add_nonbonded(int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz)
@@ -55,19 +55,63 @@ void ForceAnalysis::add_nonbonded_vdw(int i, int j, real pf_vdw, real dx, real d
     add_pairforce(i, j, ForceAnal::Interact_VDW, lj_force);
 }
 
-void ForceAnalysis::add_angle(int ai, int aj, int ak, rvec f_i, rvec f_j, rvec f_k)
-{
-    forces.add_detailed_force(ai, -1, ForceAnal::Interact_ANGLE, f_i);
-    forces.add_detailed_force(aj, -1, ForceAnal::Interact_ANGLE, f_j);
-    forces.add_detailed_force(ak, -1, ForceAnal::Interact_ANGLE, f_k);
+void ForceAnalysis::add_angle(int ai, int aj, int ak, rvec f_i, rvec f_j, rvec f_k, rvec r_ij, rvec r_kj, rvec r_ik)
+{    
+    rvec r_ji, r_jk, r_ki, f_ij, f_ik, f_ji, f_jk, f_ki, f_kj;
+    rvec_opp(r_ij, r_ji);
+    rvec_opp(r_ik, r_ki);
+    rvec_opp(r_kj, r_jk);
+    svmul(iprod(f_i, r_ij) / norm2(r_ij), r_ij, f_ij);
+    svmul(iprod(f_i, r_ik) / norm2(r_ik), r_ik, f_ik);
+    svmul(iprod(f_j, r_ji) / norm2(r_ji), r_ji, f_ji);
+    svmul(iprod(f_j, r_jk) / norm2(r_jk), r_jk, f_jk);
+    svmul(iprod(f_k, r_ki) / norm2(r_ki), r_ki, f_ki);
+    svmul(iprod(f_k, r_kj) / norm2(r_kj), r_kj, f_kj);
+    forces.add_detailed_force(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+    forces.add_detailed_force(ai, ak, ForceAnal::Interact_ANGLE, f_ik);
+    forces.add_detailed_force(aj, ai, ForceAnal::Interact_ANGLE, f_ji);
+    forces.add_detailed_force(aj, ak, ForceAnal::Interact_ANGLE, f_jk);
+    forces.add_detailed_force(ak, ai, ForceAnal::Interact_ANGLE, f_ki);
+    forces.add_detailed_force(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
 }
 
-void ForceAnalysis::add_dihedral(int i, int j, int k, int l, rvec f_i, rvec f_j, rvec f_k, rvec f_l)
+void ForceAnalysis::add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec f_j, rvec f_k, rvec f_l, rvec r_ij, rvec r_kj, rvec r_kl)
 {
-    forces.add_detailed_force(i, -1, ForceAnal::Interact_DIHEDRAL, f_i);
-    forces.add_detailed_force(j, -1, ForceAnal::Interact_DIHEDRAL, f_j);
-    forces.add_detailed_force(k, -1, ForceAnal::Interact_DIHEDRAL, f_k);
-    forces.add_detailed_force(l, -1, ForceAnal::Interact_DIHEDRAL, f_l);
+    rvec r_ik, r_il, r_ji, r_jk, r_jl, r_ki, r_li, r_lj, r_lk;
+    rvec f_ij, f_ik, f_il, f_ji, f_jk, f_jl, f_ki, f_kj, f_kl, f_li, f_lj, f_lk;
+    rvec_opp(r_ij, r_ji);
+    rvec_opp(r_kj, r_jk);
+    rvec_opp(r_kl, r_lk);
+    rvec_sub(r_ij, r_kj, r_ik);
+    rvec_sub(r_ik, r_lk, r_il);
+    rvec_sub(r_jk, r_lk, r_jl);
+    rvec_opp(r_ik, r_ki);
+    rvec_opp(r_il, r_li);
+    rvec_opp(r_jl, r_lj);
+    svmul(iprod(f_i, r_ij) / norm2(r_ij), r_ij, f_ij);
+    svmul(iprod(f_i, r_ik) / norm2(r_ik), r_ik, f_ik);
+    svmul(iprod(f_i, r_il) / norm2(r_il), r_il, f_il);
+    svmul(iprod(f_j, r_ji) / norm2(r_ji), r_ji, f_ji);
+    svmul(iprod(f_j, r_jk) / norm2(r_jk), r_jk, f_jk);
+    svmul(iprod(f_j, r_jl) / norm2(r_jl), r_jl, f_jl);
+    svmul(iprod(f_k, r_ki) / norm2(r_ki), r_ki, f_ki);
+    svmul(iprod(f_k, r_kj) / norm2(r_kj), r_kj, f_kj);
+    svmul(iprod(f_k, r_kl) / norm2(r_kl), r_kl, f_kl);
+    svmul(iprod(f_l, r_li) / norm2(r_li), r_li, f_li);
+    svmul(iprod(f_l, r_lj) / norm2(r_lj), r_lj, f_lj);
+    svmul(iprod(f_l, r_lk) / norm2(r_lk), r_lk, f_lk);
+    forces.add_detailed_force(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+    forces.add_detailed_force(ai, ak, ForceAnal::Interact_ANGLE, f_ik);
+    forces.add_detailed_force(ai, al, ForceAnal::Interact_ANGLE, f_il);
+    forces.add_detailed_force(aj, ai, ForceAnal::Interact_ANGLE, f_ji);
+    forces.add_detailed_force(aj, ak, ForceAnal::Interact_ANGLE, f_jk);
+    forces.add_detailed_force(aj, al, ForceAnal::Interact_ANGLE, f_jl);
+    forces.add_detailed_force(ak, ai, ForceAnal::Interact_ANGLE, f_ki);
+    forces.add_detailed_force(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
+    forces.add_detailed_force(ak, al, ForceAnal::Interact_ANGLE, f_kl);
+    forces.add_detailed_force(al, ai, ForceAnal::Interact_ANGLE, f_li);
+    forces.add_detailed_force(al, aj, ForceAnal::Interact_ANGLE, f_lj);
+    forces.add_detailed_force(al, ak, ForceAnal::Interact_ANGLE, f_lk);
 }
 
 void ForceAnalysis::write_frame()

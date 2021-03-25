@@ -26,7 +26,7 @@ public:
 
     ~ForceAnalysis();
 
-    void add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec fi);
+    void add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij);
 
     void add_nonbonded(int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz);
 
@@ -34,9 +34,9 @@ public:
 
     void add_nonbonded_vdw(int i, int j, real pf_vdw, real dx, real dy, real dz);
 
-    void add_angle(int ai, int aj, int ak, rvec f_i, rvec f_j, rvec f_k);
+    void add_angle(int ai, int aj, int ak, rvec f_i, rvec f_j, rvec f_k, rvec r_ij, rvec r_kj, rvec r_ik);
 
-    void add_dihedral(int i, int j, int k, int l, rvec f_i, rvec f_j, rvec f_k, rvec f_l);
+    void add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec f_j, rvec f_k, rvec f_l, rvec r_ij, rvec r_kj, rvec r_kl);
 
     void write_frame();
 
