@@ -889,7 +889,7 @@ real angles(int nbonds,
             ForceAnalysis *FA)
 {
     int  i, ai, aj, ak, t1, t2, type;
-    rvec x_i, x_j, x_k, r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik;
     real cos_theta, cos_theta2, theta, dVdt, va, vtot;
     ivec jt, dt_ij, dt_kj;
 
@@ -901,11 +901,7 @@ real angles(int nbonds,
         aj   = forceatoms[i++];
         ak   = forceatoms[i++];
 
-        x_i = x[ai];
-        x_j = x[aj];
-        x_k = x[ak];
-
-        theta  = bond_angle(x_i, x_j, x_k, pbc,
+        theta  = bond_angle(x[ai], x[aj], x[ak], pbc,
                             r_ij, r_kj, &cos_theta, &t1, &t2);  /*  41		*/                            
         rvec_sub(r_ij, r_kj, r_ik);
 
@@ -1129,7 +1125,7 @@ real linear_angles(int nbonds,
     rvec f_i, f_j, f_k;
     real L1, kA, kB, aA, aB, dr, dr2, va, vtot, a, b, klin;
     ivec jt, dt_ij, dt_kj;
-    rvec x_i, x_j, x_k, r_ij, r_kj, r_ik, dx;
+    rvec r_ij, r_kj, r_ik, dx;
 
     L1   = 1-lambda;
     vtot = 0.0;
@@ -1139,10 +1135,6 @@ real linear_angles(int nbonds,
         ai   = forceatoms[i++];
         aj   = forceatoms[i++];
         ak   = forceatoms[i++];
-        
-        x_i = x[ai];
-        x_j = x[aj];
-        x_k = x[ak];
 
         kA   = forceparams[type].linangle.klinA;
         kB   = forceparams[type].linangle.klinB;
@@ -1153,8 +1145,8 @@ real linear_angles(int nbonds,
         a    = L1*aA+lambda*aB;
         b    = 1-a;
 
-        t1 = pbc_rvec_sub(pbc, x_i, x_j, r_ij);
-        t2 = pbc_rvec_sub(pbc, x_k, x_j, r_kj);
+        t1 = pbc_rvec_sub(pbc, x[ai], x[aj], r_ij);
+        t2 = pbc_rvec_sub(pbc, x[ak], x[aj], r_kj);
         rvec_sub(r_ij, r_kj, r_ik);
 
         dr2 = 0;
@@ -1207,7 +1199,7 @@ real urey_bradley(int nbonds,
                   ForceAnalysis *FA)
 {
     int  i, m, ai, aj, ak, t1, t2, type, ki;
-    rvec x_i, x_j, x_k, r_ij, r_kj, r_ik, pf_forcevector;
+    rvec r_ij, r_kj, r_ik, pf_forcevector;
     real cos_theta, cos_theta2, theta;
     real dVdt, va, vtot, dr, dr2, vbond, fbond, fik;
     real kthA, th0A, kUBA, r13A, kthB, th0B, kUBB, r13B;
@@ -1228,12 +1220,8 @@ real urey_bradley(int nbonds,
         kthB  = forceparams[type].u_b.kthetaB;
         r13B  = forceparams[type].u_b.r13B;
         kUBB  = forceparams[type].u_b.kUBB;
-        
-        x_i = x[ai];
-        x_j = x[aj];
-        x_k = x[ak];
 
-        theta  = bond_angle(x_i, x_j, x_k, pbc,
+        theta  = bond_angle(x[ai], x[aj], x[ak], pbc,
                             r_ij, r_kj, &cos_theta, &t1, &t2);                     /*  41		*/
 
         *dvdlambda += harmonic(kthA, kthB, th0A, th0B, theta, lambda, &va, &dVdt); /*  21  */
@@ -1471,7 +1459,7 @@ real quartic_angles(int nbonds,
                     ForceAnalysis *FA)
 {
     int  i, j, ai, aj, ak, t1, t2, type;
-    rvec x_i, x_j, x_k, r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik;
     real cos_theta, cos_theta2, theta, dt, dVdt, va, dtp, c, vtot;
     ivec jt, dt_ij, dt_kj;
 
@@ -1482,12 +1470,8 @@ real quartic_angles(int nbonds,
         ai   = forceatoms[i++];
         aj   = forceatoms[i++];
         ak   = forceatoms[i++];
-        
-        x_i = x[ai];
-        x_j = x[aj];
-        x_k = x[ak];
 
-        theta  = bond_angle(x_i, x_j, x_k, pbc,
+        theta  = bond_angle(x[ai], x[aj], x[ak], pbc,
                             r_ij, r_kj, &cos_theta, &t1, &t2); /*  41		*/
         rvec_sub(r_ij, r_kj, r_ik);
 
@@ -3522,7 +3506,7 @@ real g96angles(int nbonds,
                ForceAnalysis *FA)
 {
     int  i, ai, aj, ak, type, m, t1, t2;
-    rvec x_i, x_j, x_k, r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik;
     real cos_theta, dVdt, va, vtot;
     real rij_1, rij_2, rkj_1, rkj_2, rijrkj_1;
     rvec f_i, f_j, f_k;
@@ -3536,11 +3520,7 @@ real g96angles(int nbonds,
         aj   = forceatoms[i++];
         ak   = forceatoms[i++];
 
-        x_i = x[ai];
-        x_j = x[aj];
-        x_k = x[ak];
-
-        cos_theta  = g96bond_angle(x_i, x_j, x_k, pbc, r_ij, r_kj, &t1, &t2);
+        cos_theta  = g96bond_angle(x[ai], x[aj], x[ak], pbc, r_ij, r_kj, &t1, &t2);
         rvec_sub(r_ij, r_kj, r_ik);
 
         *dvdlambda += g96harmonic(forceparams[type].harmonic.krA,
@@ -3600,7 +3580,7 @@ real cross_bond_bond(int nbonds,
      * pp. 842-847
      */
     int  i, ai, aj, ak, type, m, t1, t2;
-    rvec x_i, x_j, x_k, r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik;
     real vtot, vrr, s1, s2, r1, r2, r1e, r2e, krr;
     rvec f_i, f_j, f_k;
     ivec jt, dt_ij, dt_kj;
@@ -3616,13 +3596,9 @@ real cross_bond_bond(int nbonds,
         r2e  = forceparams[type].cross_bb.r2e;
         krr  = forceparams[type].cross_bb.krr;
 
-        x_i = x[ai];
-        x_j = x[aj];
-        x_k = x[ak];
-
         /* Compute distance vectors ... */
-        t1 = pbc_rvec_sub(pbc, x_i, x_j, r_ij);
-        t2 = pbc_rvec_sub(pbc, x_k, x_j, r_kj);
+        t1 = pbc_rvec_sub(pbc, x[ai], x[aj], r_ij);
+        t2 = pbc_rvec_sub(pbc, x[ak], x[aj], r_kj);
         rvec_sub(r_ij, r_kj, r_ik);
 
         /* ... and their lengths */
@@ -3684,7 +3660,7 @@ real cross_bond_angle(int nbonds,
      * pp. 842-847
      */
     int  i, ai, aj, ak, type, m, t1, t2;
-    rvec x_i, x_j, x_k, r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik;
     real vtot, vrt, s1, s2, s3, r1, r2, r3, r1e, r2e, r3e, krt, k1, k2, k3;
     rvec f_i, f_j, f_k;
     ivec jt, dt_ij, dt_kj;
@@ -3701,13 +3677,9 @@ real cross_bond_angle(int nbonds,
         r3e  = forceparams[type].cross_ba.r3e;
         krt  = forceparams[type].cross_ba.krt;
 
-        x_i = x[ai];
-        x_j = x[aj];
-        x_k = x[ak];
-
         /* Compute distance vectors ... */
-        t1 = pbc_rvec_sub(pbc, x_i, x_j, r_ij);
-        t2 = pbc_rvec_sub(pbc, x_k, x_j, r_kj);
+        t1 = pbc_rvec_sub(pbc, x[ai], x[aj], r_ij);
+        t2 = pbc_rvec_sub(pbc, x[ak], x[aj], r_kj);
         rvec_sub(r_ij, r_kj, r_ik);
 
         /* ... and their lengths */
@@ -3877,7 +3849,7 @@ real tab_angles(int nbonds,
                 ForceAnalysis *FA)
 {
     int  i, ai, aj, ak, t1, t2, type, table;
-    rvec x_i, x_j, x_k, r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik;
     real cos_theta, cos_theta2, theta, dVdt, va, vtot;
     ivec jt, dt_ij, dt_kj;
 
@@ -3889,11 +3861,7 @@ real tab_angles(int nbonds,
         aj   = forceatoms[i++];
         ak   = forceatoms[i++];
 
-        x_i = x[ai];
-        x_j = x[aj];
-        x_k = x[ak];
-
-        theta  = bond_angle(x_i, x_j, x_k, pbc,
+        theta  = bond_angle(x[ai], x[aj], x[ak], pbc,
                             r_ij, r_kj, &cos_theta, &t1, &t2); /*  41		*/
         rvec_sub(r_ij, r_kj, r_ik);
 
