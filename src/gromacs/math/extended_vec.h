@@ -19,4 +19,41 @@ static inline void rvec_opp(const rvec a, rvec b)
     b[ZZ] = z;
 }
 
+static inline bool rvec_small(const rvec a, real b)
+{
+    if (a[XX] > b)
+        return false;
+    if (a[YY] > b)
+        return false;
+    if (a[ZZ] > b)
+        return false;
+    return true;
+}
+
+static inline void svimul(rvec a, real b)
+{
+    real x, y, z;
+
+    x = b * a[XX];
+    y = b * a[YY];
+    z = b * a[ZZ];
+
+    a[XX] = x;
+    a[YY] = y;
+    a[ZZ] = z;
+}
+
+static inline void dsvimul(rvec a, double b)
+{
+    double x, y, z;
+
+    x = b * a[XX];
+    y = b * a[YY];
+    z = b * a[ZZ];
+
+    a[XX] = x;
+    a[YY] = y;
+    a[ZZ] = z;
+}
+
 #endif /* SRC_GROMACS_MATH_EXTENDED_VEC_H_ */

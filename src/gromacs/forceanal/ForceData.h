@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <iostream>
 #include <fstream>
 
@@ -27,16 +28,28 @@ public:
 
     ~ForceData();
 
-    void add_detailed_force(int affected, int applied, InteractionType interact_type, rvec force);
+    void add_detailed_force(int affected, int applied, InteractionType itype, rvec force);
+
+    void clear_detailed_forces();
+
+    void accumulate_summed_forces();
+
+    void average_summed_forces_laststep(double avg_factor = 1.0);
+
+    uint32_t pairforce_count();
     
-    void write_detailed_forces();
+    void write_average_summed_forces(double avg_factor = 1.0);
 
 private:
     friend class ForceAnalysis;
 
     std::ofstream result_file;
 
-    std::vector<DetailedForce> detailed_forces;
+    std::map<int, std::map<int, DetailedForce>> detailed_forces;
+
+    std::map<int, std::map<int, InteractionForce>> summed_forces;
+
+    bool accumulated_mode = true;
 };
 
 }

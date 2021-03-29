@@ -753,7 +753,7 @@ void gmx::Integrator::do_rerun()
     /* Stop measuring walltime */
     walltime_accounting_end_time(walltime_accounting);
 
-    fr->FA->write_frame();
+    fr->FA->write_frame(true);
 
     if (MASTER(cr))
     {

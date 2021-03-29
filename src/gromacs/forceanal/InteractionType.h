@@ -22,6 +22,8 @@ namespace ForceAnal {
     static const InteractionType Interact_COULOMB   = 1 << 5;
     static const InteractionType Interact_VDW       = 1 << 6;
 
+    static const InteractionType Interact_COUNT     = 7;
+
     static const InteractionType Interact_BONDED    = Interact_BOND + Interact_POLAR + Interact_ANGLE + Interact_DIHEDRAL;
     static const InteractionType Interact_NONBONDED = Interact_1_4 + Interact_COULOMB + Interact_VDW;
     static const InteractionType Interact_ALL       = Interact_BONDED + Interact_NONBONDED;

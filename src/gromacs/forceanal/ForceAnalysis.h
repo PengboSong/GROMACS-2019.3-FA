@@ -38,10 +38,17 @@ public:
 
     void add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec f_j, rvec f_k, rvec f_l, rvec r_ij, rvec r_kj, rvec r_kl);
 
-    void write_frame();
+    void set_average_steps(int Nevery_, int Nrepeat_, int Nfreq_);
+
+    void write_frame(bool write_last_frame = false);
 
 private:
     std::string result_filename = "result.bin";
+
+    uint32_t Nevery = 1;
+    uint32_t Nrepeat = 1;
+    uint32_t Nfreq = 1;
+    uint64_t frame_count = 0;
 
     ForceAnal::ForceData forces;
 };
