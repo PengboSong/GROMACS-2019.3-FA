@@ -1303,7 +1303,7 @@ real urey_bradley(int nbonds,
         }
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, ak, ForceAnal::Interact_BOND, pf_forcevector);
         }
     }
     return vtot;

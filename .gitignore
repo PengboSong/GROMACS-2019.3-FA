@@ -14,6 +14,7 @@
 *.swp
 .eggs
 .idea
+.vscode
 Makefile
 lib*.pc
 .project
@@ -22,7 +23,6 @@ lib*.pc
 .cproject
 build
 _build
-.vscode
 CMakeLists.txt.user
 /VersionInfo*.cmake
 Testing

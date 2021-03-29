@@ -93,7 +93,7 @@ namespace ForceAnal {
         void append(InteractionType itype_, rvec f_)
         {
             for (int i = 0; i < Interact_COUNT; ++i)
-                if (itype_ & (1 << i) == (1 << i))
+                if ((itype_ & 1 << i) == 1 << i)
                     rvec_inc(f[i], f_);
         }
 
@@ -105,7 +105,7 @@ namespace ForceAnal {
             {
                 if (!rvec_small(f[i], NONZERO_LIMIT))
                 {
-                    itype_ += (1 << i);
+                    itype_ += 1 << i;
                     rvec_inc(*f_, f[i]);
                 }
             }
