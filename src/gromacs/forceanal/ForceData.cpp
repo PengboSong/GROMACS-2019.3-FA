@@ -40,7 +40,7 @@ void ForceData::clear_detailed_forces()
 
 void ForceData::clear_summed_forces()
 {
-    for (auto it = summed.begin(); it != summed.end(); ++it)
+    for (auto it = summed_forces.begin(); it != summed_forces.end(); ++it)
     {
         for (auto iit = it->second.begin(); iit != it->second.end(); ++iit)
             iit->second.clear();

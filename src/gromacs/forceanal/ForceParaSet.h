@@ -8,6 +8,8 @@
 #ifndef SRC_GROMACS_FORCEANAL_FORCEPARASET_H_
 #define SRC_GROMACS_FORCEANAL_FORCEPARASET_H_
 
+#include "ForceIOtype.h"
+
 #include "gromacs/commandline/filenm.h"
 #include "gromacs/topology/topology.h"
 #include "gromacs/utility/real.h"
@@ -18,15 +20,6 @@
 #include <cstdint>
 
 namespace ForceAnal {
-
-using OutputType = uint8_t;
-
-static const OutputType OUT_NOTHING =      0;
-static const OutputType OUT_VECTOR  = 1 << 0;
-static const OutputType OUT_SCALAR  = 1 << 1;
-
-static const char* INP_YES = "yes";
-static const char* INP_NO = "no";
 
 class ForceParaSet
 {
