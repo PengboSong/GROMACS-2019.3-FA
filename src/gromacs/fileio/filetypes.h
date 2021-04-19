@@ -57,7 +57,7 @@ enum GromacsFileType {
     efEDI,
     efCUB,
     efXPM,
-    efFOR,
+    efFOR, efFXT, efPAR, /* Force Analysis defined file formats */
     efRND,
     efNR
 };

@@ -7,21 +7,20 @@
 
 #include "ForceData.h"
 
+#include "gromacs/math/vec.h"
+#include "gromacs/utility/fatalerror.h"
+
 namespace ForceAnal {
 
-ForceData::ForceData(std::string const& result_filename)
+ForceData::ForceData(bool summed_mode, real write_threshold, double average_factor)
+ : summed(summed_mode),
+   threshold(write_threshold),
+   avg_factor(average_factor)
 {
-    result_file.open(result_filename, std::ios::binary);
-    // Raise runtime error if file handler cannot be opened
-    if (!result_file.is_open())
-    {
-        
-    }
 }
 
 ForceData::~ForceData()
 {
-    result_file.close();
 }
 
 void ForceData::add_detailed_force(int affected, int applied, InteractionType itype, rvec force)
@@ -32,8 +31,21 @@ void ForceData::add_detailed_force(int affected, int applied, InteractionType it
 void ForceData::clear_detailed_forces()
 {
     for (auto it = detailed_forces.begin(); it != detailed_forces.end(); ++it)
+    {
         for (auto iit = it->second.begin(); iit != it->second.end(); ++iit)
             iit->second.clear();
+        it->second.clear();
+    }
+}
+
+void ForceData::clear_summed_forces()
+{
+    for (auto it = summed.begin(); it != summed.end(); ++it)
+    {
+        for (auto iit = it->second.begin(); iit != it->second.end(); ++iit)
+            iit->second.clear();
+        it->second.clear();
+    }
 }
 
 void ForceData::accumulate_summed_forces()
@@ -51,7 +63,7 @@ void ForceData::accumulate_summed_forces()
     }
 }
 
-void ForceData::average_summed_forces_laststep(double avg_factor)
+void ForceData::average_summed_forces_laststep()
 {
     for (auto it = detailed_forces.begin(); it != detailed_forces.end(); ++it)
         for (auto iit = it->second.begin(); iit != it->second.end(); ++iit)
@@ -66,39 +78,79 @@ uint32_t ForceData::pairforce_count()
     return count_num;
 }
 
-void ForceData::write_average_summed_forces(double avg_factor)
+void ForceData::write_avg_forces(std::ofstream &res_stream, int frameid, InteractionType out_itype, bool write_bin)
 {
-    uint32_t forces_len = pairforce_count();
-    if (result_file.is_open())
+    if (!res_stream.is_open())
+        gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to binary file.\n");
+    
+    int i, j, k;
+    InteractionType itype;
+
+    std::vector<PairForce> out_forces;
+    if (summed)
     {
-        result_file.write((char*)&forces_len, sizeof(forces_len));
-        int i, j;
-        InteractionType itype;
-        real fx, fy, fz;
         for (auto it = summed_forces.begin(); it != summed_forces.end(); ++it)
         {
             i = it->first;
             for (auto iit = it->second.begin(); iit != it->second.end(); ++iit)
             {
                 j = iit->first;
-                itype = iit->second.itype;
-                fx = iit->second.f[0] * avg_factor;
-                fy = iit->second.f[1] * avg_factor;
-                fz = iit->second.f[2] * avg_factor;
-                result_file.write((char*)&i, sizeof(int));
-                result_file.write((char*)&j, sizeof(int));
-                result_file.write((char*)&itype, sizeof(InteractionType));
-                result_file.write((char*)&fx, sizeof(real));
-                result_file.write((char*)&fy, sizeof(real));
-                result_file.write((char*)&fz, sizeof(real));
-                iit->second.clear();
+                PairForce pf(i, j, iit->second.itype, iit->second.f);
+                pf *= avg_factor;
+                if (pf.f < threshold)
+                    continue;
+                out_forces.push_back(pf);
             }
         }
     }
     else
     {
-        std::runtime_error("Cannot open ForceAnalysis result file.");
-        return ;
+        for (auto it = detailed_forces.begin(); it != detailed_forces.end(); ++it)
+        {
+            i = it->first;
+            for (auto iit = it->second.begin(); iit != it->second.end(); ++iit)
+            {
+                j = iit->first;
+                for (k = 0; k < Interact_COUNT; ++k)
+                {
+                    if ((out_itype & 1 << k) != 0)
+                    {
+                        itype = 1 << k;
+                        PairForce pf(i, j, itype, iit->second.f[k]);
+                        pf *= avg_factor;
+                        if (pf.f < threshold)
+                            continue;
+                        out_forces.push_back(pf);
+                    }
+                }
+            }
+        }
+    }
+
+    if (write_bin)
+    {
+        size_t forces_count = out_forces.size();
+        res_stream.write((char*)&frameid, sizeof(int));
+        res_stream.write((char*)&forces_count, sizeof(uint32_t));
+        for (const PairForce &pf : out_forces)
+        {
+            res_stream.write((char*)&pf.i, sizeof(int));
+            res_stream.write((char*)&pf.j, sizeof(int));
+            res_stream.write((char*)&pf.type, sizeof(InteractionType));
+            res_stream.write((char*)&pf.fx, sizeof(real));
+            res_stream.write((char*)&pf.fy, sizeof(real));
+            res_stream.write((char*)&pf.fz, sizeof(real));
+            res_stream.write((char*)&pf.f, sizeof(real));
+        }
+    }
+    else
+    {
+        res_stream << "START FRAME " << frameid << std::endl;
+        for (const PairForce &pf : out_forces)
+        {
+            res_stream << pf.i << ' ' << pf.j << ' ' << pf.fx << ' ' << pf.fy << ' ' << pf.fz << ' ' << pf.type << std::endl;
+        }
+        res_stream << "END FRAME " << frameid << std::endl;
     }
 }
 

@@ -24,15 +24,26 @@ namespace ForceAnal {
             i = affected;
             j = applied;
             type = interact_type;
-            copy_rvec(force, f);
+            fx = force[XX];
+            fy = force[YY];
+            fz = force[ZZ];
+            f = norm(force);
         }
 
         ~PairForce()
         {}
 
+        void operator*=(double factor)
+        {
+            fx *= factor;
+            fy *= factor;
+            fz *= factor;
+            f *= factor;
+        }
+
         int i, j;
         InteractionType type;
-        rvec f;
+        real fx, fy, fz, f;
     };
 
     struct InteractionForce
@@ -92,9 +103,9 @@ namespace ForceAnal {
 
         void append(InteractionType itype_, rvec f_)
         {
-            for (int i = 0; i < Interact_COUNT; ++i)
-                if ((itype_ & 1 << i) == 1 << i)
-                    rvec_inc(f[i], f_);
+            int i = 0;
+            while ((itype_ >> i & 1) == 0 && i < Interact_COUNT) ++i;
+            rvec_inc(f[i], f_);                    
         }
 
         void accumulate(InteractionType *itype_, rvec *f_)

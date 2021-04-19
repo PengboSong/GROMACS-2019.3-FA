@@ -5,8 +5,8 @@
  *      Author: Pengbo Song
  */
 
-#ifndef SRC_GROMACS_FORCEANAL_FORCESETTINGS_H_
-#define SRC_GROMACS_FORCEANAL_FORCESETTINGS_H_
+#ifndef SRC_GROMACS_FORCEANAL_FORCEPARASET_H_
+#define SRC_GROMACS_FORCEANAL_FORCEPARASET_H_
 
 #include "gromacs/commandline/filenm.h"
 #include "gromacs/topology/topology.h"
@@ -19,6 +19,15 @@
 
 namespace ForceAnal {
 
+using OutputType = uint8_t;
+
+static const OutputType OUT_NOTHING =      0;
+static const OutputType OUT_VECTOR  = 1 << 0;
+static const OutputType OUT_SCALAR  = 1 << 1;
+
+static const char* INP_YES = "yes";
+static const char* INP_NO = "no";
+
 class ForceParaSet
 {
 public:
@@ -26,15 +35,25 @@ public:
     ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop);
     ~ForceParaSet();
 
-    void reset_filename();
-
     void check_average_steps();
 
+    void set_parameters(int nfile, const t_filenm fnm[]);
+
+    bool checkterm2bool(const char* term, bool def = true);
+
 protected:
-    std::string result_filename;
-    std::string result_full_filename;
-    
-    bool write_in_binary;
+    std::string result_binary_filename;
+    std::string result_text_filename;
+
+    std::string summed_term;
+    std::string vector_term;
+    std::string scalar_term;
+
+    bool summed_mode;
+
+    OutputType output_type;
+
+    real threshold;
 
     uint32_t Nevery;
     uint32_t Nrepeat;
@@ -52,4 +71,4 @@ struct ForceParaSet
 
 #endif
 
-#endif /* SRC_GROMACS_FORCEANAL_FORCESETTINGS_H_ */
+#endif /* SRC_GROMACS_FORCEANAL_FORCEPARASET_H_ */

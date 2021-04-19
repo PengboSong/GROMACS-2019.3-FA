@@ -24,7 +24,7 @@ namespace ForceAnal {
 class ForceData
 {
 public:
-    ForceData(std::string const& result_filename);
+    ForceData(bool summed_mode, real write_threshold, double average_factor);
 
     ~ForceData();
 
@@ -32,24 +32,28 @@ public:
 
     void clear_detailed_forces();
 
+    void clear_summed_forces();
+
     void accumulate_summed_forces();
 
-    void average_summed_forces_laststep(double avg_factor = 1.0);
+    void average_summed_forces_laststep();
 
     uint32_t pairforce_count();
-    
-    void write_average_summed_forces(double avg_factor = 1.0);
+
+    void write_avg_forces(std::ofstream &res_stream, int frameid, InteractionType out_itype, bool write_bin);
 
 private:
     friend class ForceAnalysis;
 
-    std::ofstream result_file;
+    real threshold;
+
+    double avg_factor;
+
+    bool summed;
 
     std::map<int, std::map<int, DetailedForce>> detailed_forces;
 
     std::map<int, std::map<int, InteractionForce>> summed_forces;
-
-    bool accumulated_mode = true;
 };
 
 }

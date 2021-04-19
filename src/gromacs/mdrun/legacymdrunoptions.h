@@ -128,7 +128,10 @@ class LegacyMdrunOptions
           { efNDX, "-mn",       "membed",    ffOPTRD },
           { efXVG, "-if",       "imdforces", ffOPTWR },
           { efXVG, "-swap",     "swapions",  ffOPTWR },
-          { efFOR, "-force",    "fa",        ffOPTWR}}};
+          /* Force Analysis defined file formats */
+          { efFOR, "-fo",       "fa",        ffOPTWR },
+          { efFXT, "-ft",       "fa",        ffOPTWR },
+          { efPAR, "-fp",       "fa",        ffOPTRD }}};
 
         //! Print a warning if any force is larger than this (in kJ/mol nm).
         real                             pforce = -1;

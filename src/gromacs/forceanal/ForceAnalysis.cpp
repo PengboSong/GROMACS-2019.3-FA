@@ -15,14 +15,20 @@
 #include "InteractionType.h"
 
 ForceAnalysis::ForceAnalysis()
- : forces(result_filename)
-{
-    
+ : forces(summed_mode, threshold, 1.0 / Nrepeat),
+   frame_count(0)
+{    
 }
 
-ForceAnalysis::~ForceAnalysis()
+ForceAnalysis::ForceAnalysis(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
+ : ForceAnal::ForceParaSet(nfile, fnm, mtop),
+   forces(summed_mode, threshold, 1.0 / Nrepeat),
+   frame_count(0)
 {
-    
+
+}
+ForceAnalysis::~ForceAnalysis()
+{    
 }
 
 void ForceAnalysis::add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij)
@@ -117,7 +123,19 @@ void ForceAnalysis::write_frame(bool write_last_frame)
             is_cleared = true;
         }
         if (cycle_index == Nfreq)
-            forces.write_average_summed_forces(1.0 / Nrepeat);
+        {
+            if (!result_binary_filename.empty())
+            {
+                std::ofstream res_bin_stream(result_binary_filename, std::ios::out | std::ios::binary | std::ios::app);
+                forces.write_avg_forces(res_bin_stream, frame_count, ForceAnal::Interact_ALL, true);
+            }
+            if (!result_text_filename.empty())
+            {
+                std::ofstream res_txt_stream(result_text_filename, std::ios::out | std::ios::app);
+                forces.write_avg_forces(res_txt_stream, frame_count, ForceAnal::Interact_ALL, true);
+            }
+            forces.clear_summed_forces();
+        }
     }
     if (!is_cleared)
         forces.clear_detailed_forces();

@@ -18,12 +18,13 @@
 
 #include "InteractionType.h"
 #include "ForceData.h"
+#include "ForceParaSet.h"
 
-class ForceAnalysis
+class ForceAnalysis : public ForceAnal::ForceParaSet
 {
 public:
     ForceAnalysis();
-
+    ForceAnalysis(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop);
     ~ForceAnalysis();
 
     void add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij);
@@ -43,12 +44,7 @@ public:
     void write_frame(bool write_last_frame = false);
 
 private:
-    std::string result_filename = "result.bin";
-
-    uint32_t Nevery = 1;
-    uint32_t Nrepeat = 1;
-    uint32_t Nfreq = 1;
-    uint64_t frame_count = 0;
+    uint64_t frame_count;
 
     ForceAnal::ForceData forces;
 };

@@ -573,7 +573,7 @@ int Mdrunner::mdrunner()
             globalState->flags &= ~(1 << estV);
         }
 
-        ptr_FA = std::make_shared<ForceAnalysis>();
+        ptr_FA = std::make_shared<ForceAnalysis>(filenames.size(), filenames.data(), &mtop);
 
         if (inputrec->cutoff_scheme != ecutsVERLET)
         {

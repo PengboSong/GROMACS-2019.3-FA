@@ -97,8 +97,9 @@ static const int tpss[] =
 };
 #define NTPSS asize(tpss)
 
+/* Force Analysis defined file formats */
 static const int tfafmt[] = {
-    efFOR
+    efFOR, efFXT, efPAR
 };
 #define NTFAFMT asize(tfafmt)
 
@@ -161,7 +162,10 @@ static const t_deffile deffile[efNR] =
     { eftASC, ".edi", "sam",    nullptr, "ED sampling input"},
     { eftASC, ".cub", "pot",  nullptr, "Gaussian cube file" },
     { eftASC, ".xpm", "root", nullptr, "X PixMap compatible matrix file" },
-    { eftASC, ".for", "fa", nullptr, "Force original data output file for Force Analysis" },
+    /* Force Analysis defined file formats */
+    { eftASC, ".for", "fa", "-fo", "Force Analysis extracted binary force data file" },
+    { eftASC, ".fxt", "fa", "-ft", "Force Analysis extracted text force data file" },
+    { eftASC, ".par", "fa", "-fp", "Force Analysis unique parameters setting file" },
     { eftASC, "", "rundir", nullptr, "Run directory" }
 };
 
