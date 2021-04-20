@@ -15,18 +15,18 @@
 #include "InteractionType.h"
 
 ForceAnalysis::ForceAnalysis()
- : forces(summed_mode, threshold, 1.0 / Nrepeat),
-   frame_count(0)
+ : frame_count(0),
+   forces(summed_mode, threshold, 1.0 / Nrepeat)
 {    
 }
 
 ForceAnalysis::ForceAnalysis(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
  : ForceAnal::ForceParaSet(nfile, fnm, mtop),
-   forces(summed_mode, threshold, 1.0 / Nrepeat),
-   frame_count(0)
+   frame_count(0),
+   forces(summed_mode, threshold, 1.0 / Nrepeat)
 {
-
 }
+
 ForceAnalysis::~ForceAnalysis()
 {    
 }
@@ -111,10 +111,16 @@ void ForceAnalysis::set_average_steps(int Nevery_, int Nrepeat_, int Nfreq_)
 
 void ForceAnalysis::write_frame(bool write_last_frame)
 {
+    if (!res_bin_fn.empty())
+        res_bin_stream.open(res_bin_fn, std::ios::out | std::ios::binary | std::ios::app);
+    if (!res_txt_fn.empty())
+        res_txt_stream.open(res_txt_fn, std::ios::out | std::ios::app);
+
     ++frame_count;
     uint32_t cycle_index = frame_count % Nfreq;
     cycle_index = cycle_index == 0 ? Nfreq : cycle_index; // In range [1, Nfreq]
     bool is_cleared = false;
+
     if (cycle_index > (Nfreq - Nevery * Nrepeat))
     {
         if (((Nfreq - cycle_index) % Nrepeat) == 0)
@@ -124,17 +130,12 @@ void ForceAnalysis::write_frame(bool write_last_frame)
         }
         if (cycle_index == Nfreq)
         {
-            if (!result_binary_filename.empty())
-            {
-                std::ofstream res_bin_stream(result_binary_filename, std::ios::out | std::ios::binary | std::ios::app);
+            if (res_bin_stream.is_open())
                 forces.write_avg_forces(res_bin_stream, frame_count, ForceAnal::Interact_ALL, true);
-            }
-            if (!result_text_filename.empty())
-            {
-                std::ofstream res_txt_stream(result_text_filename, std::ios::out | std::ios::app);
-                forces.write_avg_forces(res_txt_stream, frame_count, ForceAnal::Interact_ALL, true);
-            }
-            forces.clear_summed_forces();
+            if (res_txt_stream.is_open())
+                forces.write_avg_forces(res_txt_stream, frame_count, ForceAnal::Interact_ALL, false);
+            forces.clear();
+            is_cleared = true;
         }
     }
     if (!is_cleared)
@@ -142,6 +143,11 @@ void ForceAnalysis::write_frame(bool write_last_frame)
     
     if (write_last_frame)
         frame_count = 0;   // Reset frame counter
+    
+    if (res_bin_stream.is_open())
+        res_bin_stream.close();
+    if (res_txt_stream.is_open())
+        res_txt_stream.close();
 }
 
 void FA_add_nonbonded(class ForceAnalysis *FA, int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz)

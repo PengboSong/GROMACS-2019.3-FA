@@ -15,7 +15,8 @@
 namespace ForceAnal {
 
 ForceParaSet::ForceParaSet()
- : summed_mode(true),
+ : outpara_fn("faout.par"),
+   summed_mode(true),
    output_type(OUT_NOTHING),
    threshold(1e-3),
    Nevery(1),
@@ -27,7 +28,8 @@ ForceParaSet::ForceParaSet()
 }
 
 ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
- : summed_mode(true),
+ : outpara_fn("faout.par"),
+   summed_mode(true),
    output_type(OUT_NOTHING),
    threshold(1e-3),
    Nevery(1),
@@ -39,8 +41,8 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
     set_parameters(nfile, fnm);
     check_average_steps();
     
-    result_binary_filename = std::string(opt2fn_null("-fo", nfile, fnm));
-    result_text_filename = std::string(opt2fn_null("-ft", nfile, fnm));
+    res_bin_fn = handle_empty_string(opt2fn("-fo", nfile, fnm));
+    res_txt_fn = handle_empty_string(opt2fn("-ft", nfile, fnm));
 }
 
 ForceParaSet::~ForceParaSet()
@@ -63,10 +65,21 @@ bool ForceParaSet::checkterm2bool(const std::string term, bool def)
         return def;
 }
 
+std::string ForceParaSet::handle_empty_string(const char *str)
+{
+    if (str != nullptr)
+        return std::string(str);
+    else
+        return std::string();
+}
+
 void ForceParaSet::set_parameters(int nfile, const t_filenm fnm[])
 {
     warninp_t wi = init_warning(FALSE, 0);
-    std::string FA_paraset_fn = std::string(opt2fn("-fp", nfile, fnm));
+    std::string FA_paraset_fn;
+    if (opt2bSet("-fp", nfile, fnm))
+        FA_paraset_fn = handle_empty_string(opt2fn("-fp", nfile, fnm));
+    
     std::vector<t_inpfile> inp;
     if (!FA_paraset_fn.empty())
     {
@@ -90,6 +103,9 @@ void ForceParaSet::set_parameters(int nfile, const t_filenm fnm[])
     Nevery = get_eint(&inp, "nevery", 1, wi);
     Nrepeat = get_eint(&inp, "nrepeat", 1, wi);
     Nfreq = get_eint64(&inp, "nfreq", 1, wi);
+
+    gmx::TextOutputFile outpara_stream(outpara_fn);
+    write_inpfile(&outpara_stream, outpara_fn.c_str(), &inp, FALSE, WriteMdpHeader::yes, wi);
 }
 
 }

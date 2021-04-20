@@ -48,6 +48,13 @@ void ForceData::clear_summed_forces()
     }
 }
 
+void ForceData::clear()
+{
+    clear_detailed_forces();
+    if (summed)
+        clear_summed_forces();
+}
+
 void ForceData::accumulate_summed_forces()
 {
     InteractionType itype;
@@ -78,10 +85,10 @@ uint32_t ForceData::pairforce_count()
     return count_num;
 }
 
-void ForceData::write_avg_forces(std::ofstream &res_stream, int frameid, InteractionType out_itype, bool write_bin)
+void ForceData::write_avg_forces(std::ofstream& res_stream, int frameid, InteractionType out_itype, bool write_bin)
 {
     if (!res_stream.is_open())
-        gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to binary file.\n");
+        gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to file.\n");
     
     int i, j, k;
     InteractionType itype;
@@ -113,9 +120,9 @@ void ForceData::write_avg_forces(std::ofstream &res_stream, int frameid, Interac
                 j = iit->first;
                 for (k = 0; k < Interact_COUNT; ++k)
                 {
-                    if ((out_itype & 1 << k) != 0)
+                    itype = 1 << k;
+                    if ((out_itype & itype) != 0)
                     {
-                        itype = 1 << k;
                         PairForce pf(i, j, itype, iit->second.f[k]);
                         pf *= avg_factor;
                         if (pf.f < threshold)

@@ -47,6 +47,10 @@ private:
     uint64_t frame_count;
 
     ForceAnal::ForceData forces;
+
+    std::ofstream res_bin_stream;
+
+    std::ofstream res_txt_stream;
 };
 
 #else

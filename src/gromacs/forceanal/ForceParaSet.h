@@ -32,11 +32,15 @@ public:
 
     void set_parameters(int nfile, const t_filenm fnm[]);
 
-    bool checkterm2bool(const std::string term, bool def = true);
+    static bool checkterm2bool(const std::string term, bool def = true);
+
+    static std::string handle_empty_string(const char *str);
 
 protected:
-    std::string result_binary_filename;
-    std::string result_text_filename;
+    std::string outpara_fn;
+
+    std::string res_bin_fn;
+    std::string res_txt_fn;
 
     std::string summed_term;
     std::string vector_term;
