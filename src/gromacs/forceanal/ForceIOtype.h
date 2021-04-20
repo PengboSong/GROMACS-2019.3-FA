@@ -9,6 +9,7 @@
 #define SRC_GROMACS_FORCEANAL_FORCEIOTYPE_H_
 
 #include <cstdint>
+#include <string>
 
 namespace ForceAnal {
 
@@ -18,8 +19,8 @@ static const OutputType OUT_NOTHING =      0;
 static const OutputType OUT_VECTOR  = 1 << 0;
 static const OutputType OUT_SCALAR  = 1 << 1;
 
-static const char* INP_YES = "yes";
-static const char* INP_NO = "no";
+static const std::string INP_YES = "yes";
+static const std::string INP_NO = "no";
 
 }
 

@@ -32,7 +32,7 @@ public:
 
     void set_parameters(int nfile, const t_filenm fnm[]);
 
-    bool checkterm2bool(const char* term, bool def = true);
+    bool checkterm2bool(const std::string term, bool def = true);
 
 protected:
     std::string result_binary_filename;

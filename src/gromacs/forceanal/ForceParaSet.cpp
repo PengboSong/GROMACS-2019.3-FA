@@ -53,11 +53,11 @@ void ForceParaSet::check_average_steps()
     Nfreq = Nfreq < Nfreq_mult ? Nfreq_mult : Nfreq;
 }
 
-bool ForceParaSet::checkterm2bool(const char* term, bool def)
+bool ForceParaSet::checkterm2bool(const std::string term, bool def)
 {
-    if (std::strcmp(term, INP_YES))
+    if (term == INP_YES)
         return true;
-    else if (std::strcmp(term, INP_NO))
+    else if (term == INP_NO)
         return false;
     else
         return def;
@@ -80,10 +80,10 @@ void ForceParaSet::set_parameters(int nfile, const t_filenm fnm[])
     vector_term = get_estr(&inp, "vector", "yes");
     scalar_term = get_estr(&inp, "scalar", "yes");
 
-    summed_mode = checkterm2bool(summed_term.c_str());
-    if (checkterm2bool(vector_term.c_str()))
+    summed_mode = checkterm2bool(summed_term);
+    if (checkterm2bool(vector_term))
         output_type |= OUT_VECTOR;
-    if (checkterm2bool(scalar_term.c_str()))
+    if (checkterm2bool(scalar_term))
         output_type |= OUT_SCALAR;
     
     threshold = get_ereal(&inp, "threshold", 1e-6, wi);
