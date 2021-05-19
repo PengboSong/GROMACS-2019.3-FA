@@ -136,7 +136,7 @@ void ForceData::write_avg_forces(std::ofstream& res_stream, int frameid, Interac
 
     if (write_bin)
     {
-        size_t forces_count = out_forces.size();
+        uint32_t forces_count = out_forces.size();
         res_stream.write((char*)&frameid, sizeof(int));
         res_stream.write((char*)&forces_count, sizeof(uint32_t));
         for (const PairForce &pf : out_forces)
@@ -155,7 +155,7 @@ void ForceData::write_avg_forces(std::ofstream& res_stream, int frameid, Interac
         res_stream << "START FRAME " << frameid << std::endl;
         for (const PairForce &pf : out_forces)
         {
-            res_stream << pf.i << ' ' << pf.j << ' ' << pf.fx << ' ' << pf.fy << ' ' << pf.fz << ' ' << pf.type << std::endl;
+            res_stream << pf.i << ' ' << pf.j << ' ' << pf.fx << ' ' << pf.fy << ' ' << pf.fz << ' ' << (int)pf.type << std::endl;
         }
         res_stream << "END FRAME " << frameid << std::endl;
     }
