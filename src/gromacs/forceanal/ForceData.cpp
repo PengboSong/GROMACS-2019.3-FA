@@ -149,6 +149,19 @@ void ForceData::write_avg_forces(std::ofstream& res_stream, int frameid, Interac
             res_stream.write((char*)&pf.fz, sizeof(real));
             res_stream.write((char*)&pf.f, sizeof(real));
         }
+
+#ifdef DEBUG
+        int64_t blockloc = res_stream.tellp();
+        std::string debug_bintable_fnm = "fda.bintable";
+        std::oftsream debug_bintable(debug_bintable_fnm, std::ios::out | std::ios::binary | std::ios::app);
+        if (debug_bintable.is_open())
+        {
+            debug_bintable.write((char*)&frameid, sizeof(int));
+            debug_bintable.write((char*)&forces_count, sizeof(uint32_t));
+            debug_bintable.write((char*)&blockloc, sizeof(int64_t));
+            debug_bintable.close();
+        }
+#endif /* DEBUG */
     }
     else
     {
