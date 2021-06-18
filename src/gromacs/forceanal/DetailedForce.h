@@ -12,11 +12,10 @@
 #include "gromacs/math/vec.h"
 #include "gromacs/math/vectypes.h"
 #include "gromacs/utility/real.h"
+#include "ForceAnalConst.h"
 #include "InteractionType.h"
 
 namespace ForceAnal {
-    static const real NONZERO_LIMIT = 1e-6;
-
     struct PairForce
     {
         PairForce(int affected, int applied, InteractionType interact_type, rvec force)

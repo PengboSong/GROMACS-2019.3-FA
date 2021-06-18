@@ -17,32 +17,48 @@
 #include "gromacs/math/vectypes.h"
 #include "gromacs/utility/real.h"
 #include "InteractionType.h"
+#include "AtomForce.h"
 #include "DetailedForce.h"
 
 namespace ForceAnal {
 
-class ForceData
+class SummedMode
+{
+    public:
+
+    SummedMode()
+    {}
+
+    SummedForce forces;
+};
+
+class DetailedMode
+{
+    public:
+
+    DetailedMode()
+    {}
+
+    DetailedForce forces;
+};
+
+template <class ForceMode>
+class ForceData : ForceMode
 {
 public:
-    ForceData(bool summed_mode, real write_threshold, double average_factor);
+    ForceData(real write_threshold, double average_factor);
 
     ~ForceData();
 
     void add_detailed_force(int affected, int applied, InteractionType itype, rvec force);
 
-    void clear_detailed_forces();
-
-    void clear_summed_forces();
-
     void clear();
 
-    void accumulate_summed_forces();
+    void average_forces();
 
-    void average_summed_forces_laststep();
+    void write_forces_txt(std::string fname, int32_t frameid);
 
-    uint32_t pairforce_count();
-
-    void write_avg_forces(std::ofstream& res_stream, int frameid, InteractionType out_itype, bool write_bin);
+    void write_forces_bin(std::string fname, int32_t frameid);
 
 private:
     friend class ForceAnalysis;
@@ -56,6 +72,7 @@ private:
     std::map<int, std::map<int, DetailedForce>> detailed_forces;
 
     std::map<int, std::map<int, InteractionForce>> summed_forces;
+
 };
 
 }

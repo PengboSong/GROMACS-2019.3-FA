@@ -16,14 +16,16 @@
 
 ForceAnalysis::ForceAnalysis()
  : frame_count(0),
-   forces(summed_mode, threshold, 1.0 / Nrepeat)
-{    
+   summed_forces(threshold, 1.0 / Naverage),
+   detailed_forces(threshold, 1.0 / Naverage)
+{
 }
 
 ForceAnalysis::ForceAnalysis(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
  : ForceAnal::ForceParaSet(nfile, fnm, mtop),
    frame_count(0),
-   forces(summed_mode, threshold, 1.0 / Nrepeat)
+   summed_forces(threshold, 1.0 / Naverage),
+   detailed_forces(threshold, 1.0 / Naverage)
 {
 }
 
@@ -35,13 +37,19 @@ void ForceAnalysis::add_pairforce(int i, int j, ForceAnal::InteractionType type,
 {
     if (i < j)
     {
-        forces.add_detailed_force(i, j, type, f_ij);
+        if (summed_mode)
+            summed_forces.add_detailed_force(i, j, type, f_ij);
+        else
+            detailed_forces.add_detailed_force(i, j, type, f_ij);
     }
     else
     {
         rvec f_ji;
         rvec_opp(f_ij, f_ji);
-        forces.add_detailed_force(j, i, type, f_ji);
+        if (summed_mode)
+            summed_forces.add_detailed_force(j, i, type, f_ji);
+        else
+            detailed_forces.add_detailed_force(j, i, type, f_ji);
     }
 }
 
@@ -101,53 +109,34 @@ void ForceAnalysis::add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec 
     add_pairforce(ak, al, ForceAnal::Interact_ANGLE, f_kl);
 }
 
-void ForceAnalysis::set_average_steps(int Nevery_, int Nrepeat_, int Nfreq_)
-{
-    Nevery = std::max<int>(Nevery_, 1);
-    Nrepeat = std::max<int>(Nrepeat_, 1);
-    // Nevery * Nrepeat <= Nfreq
-    Nfreq = std::max<int>(Nfreq_, Nevery * Nrepeat);
-}
-
 void ForceAnalysis::write_frame(bool write_last_frame)
 {
-    if (!res_bin_fn.empty())
-        res_bin_stream.open(res_bin_fn, std::ios::out | std::ios::binary | std::ios::app);
-    if (!res_txt_fn.empty())
-        res_txt_stream.open(res_txt_fn, std::ios::out | std::ios::app);
-
     ++frame_count;
-    uint32_t cycle_index = frame_count % Nfreq;
-    cycle_index = cycle_index == 0 ? Nfreq : cycle_index; // In range [1, Nfreq]
-    bool is_cleared = false;
 
-    if (cycle_index > (Nfreq - Nevery * Nrepeat))
+    if ((frame_count % Naverage) == 0)
     {
-        if (((Nfreq - cycle_index) % Nrepeat) == 0)
+        if (summed_mode)
         {
-            forces.accumulate_summed_forces();
-            is_cleared = true;
+            summed_forces.average_forces();
+            if (!res_txt_fn.empty())
+                summed_forces.write_forces_txt(res_txt_fn, frame_count);
+            if (!res_bin_fn.empty())
+                summed_forces.write_forces_bin(res_bin_fn, frame_count);
+            summed_forces.clear();
         }
-        if (cycle_index == Nfreq)
+        else
         {
-            if (res_bin_stream.is_open())
-                forces.write_avg_forces(res_bin_stream, frame_count, ForceAnal::Interact_ALL, true);
-            if (res_txt_stream.is_open())
-                forces.write_avg_forces(res_txt_stream, frame_count, ForceAnal::Interact_ALL, false);
-            forces.clear();
-            is_cleared = true;
+            detailed_forces.average_forces();
+            if (!res_txt_fn.empty())
+                detailed_forces.write_forces_txt(res_txt_fn, frame_count);
+            if (!res_bin_fn.empty())
+                detailed_forces.write_forces_bin(res_bin_fn, frame_count);
+            detailed_forces.clear();
         }
     }
-    if (!is_cleared)
-        forces.clear_detailed_forces();
     
     if (write_last_frame)
         frame_count = 0;   // Reset frame counter
-    
-    if (res_bin_stream.is_open())
-        res_bin_stream.close();
-    if (res_txt_stream.is_open())
-        res_txt_stream.close();
 }
 
 void FA_add_nonbonded(class ForceAnalysis *FA, int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz)

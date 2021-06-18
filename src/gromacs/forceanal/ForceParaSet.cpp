@@ -19,9 +19,7 @@ ForceParaSet::ForceParaSet()
    summed_mode(true),
    output_type(OUT_NOTHING),
    threshold(1e-3),
-   Nevery(1),
-   Nrepeat(1),
-   Nfreq(1),
+   Naverage(1),
    group1_id(0),
    group2_id(0)
 {
@@ -32,9 +30,7 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
    summed_mode(true),
    output_type(OUT_NOTHING),
    threshold(1e-3),
-   Nevery(1),
-   Nrepeat(1),
-   Nfreq(1),
+   Naverage(1),
    group1_id(0),
    group2_id(0)
 {
@@ -47,12 +43,6 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
 
 ForceParaSet::~ForceParaSet()
 {
-}
-
-void ForceParaSet::check_average_steps()
-{
-    uint64_t Nfreq_mult = uint64_t(Nevery) * uint64_t(Nrepeat);
-    Nfreq = Nfreq < Nfreq_mult ? Nfreq_mult : Nfreq;
 }
 
 bool ForceParaSet::checkterm2bool(const std::string term, bool def)
@@ -100,9 +90,7 @@ void ForceParaSet::set_parameters(int nfile, const t_filenm fnm[])
         output_type |= OUT_SCALAR;
     
     threshold = get_ereal(&inp, "threshold", 1e-6, wi);
-    Nevery = get_eint(&inp, "nevery", 1, wi);
-    Nrepeat = get_eint(&inp, "nrepeat", 1, wi);
-    Nfreq = get_eint64(&inp, "nfreq", 1, wi);
+    Naverage = get_eint64(&inp, "naverage", 1, wi);
 
     gmx::TextOutputFile outpara_stream(outpara_fn);
     write_inpfile(&outpara_stream, outpara_fn.c_str(), &inp, FALSE, WriteMdpHeader::yes, wi);

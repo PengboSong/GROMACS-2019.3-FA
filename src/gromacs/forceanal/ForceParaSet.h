@@ -52,9 +52,7 @@ protected:
 
     real threshold;
 
-    uint32_t Nevery;
-    uint32_t Nrepeat;
-    uint64_t Nfreq;
+    uint64_t Naverage;
 
     int group1_id, group2_id;
 };
