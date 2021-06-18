@@ -28,24 +28,7 @@ namespace ForceAnal {
     static const InteractionType Interact_NONBONDED = Interact_1_4 + Interact_COULOMB + Interact_VDW;
     static const InteractionType Interact_ALL       = Interact_BONDED + Interact_NONBONDED;
 
-    uint8_t index_itype(InteractionType itype)
-    {
-        if (itype == 0) return 0;
-
-        uint8_t n = 7;
-        if (itype >> 4 == 0)
-        {
-            n -= 4;
-            itype <<= 4;
-        }
-        if (itype >> 6 == 0)
-        {
-            n -= 2;
-            itype <<= 2;
-        }
-        n += (itype >> 7);
-        return n;
-    }
+    uint8_t index_itype(InteractionType itype);
 }
 
 #endif /* SRC_GROMACS_FORCEANAL_INTERACTIONTYPE_H_ */

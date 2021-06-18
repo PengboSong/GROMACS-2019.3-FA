@@ -92,7 +92,6 @@ namespace ForceAnal {
 
         void norm2()
         {
-            int64_t idx;
             real fx, fy, fz;
             for (uint64_t i = 0; i < forcelen;)
             {

@@ -36,8 +36,15 @@ void ForceData<DetailedMode>::add_detailed_force(int affected, int applied, Inte
     forces[affected][applied].add(itype, force);
 }
 
-template <class ForceMode>
-void ForceData<ForceMode>::clear()
+template <>
+void ForceData<SummedMode>::clear()
+{
+    for (uint64_t i = 0; i < forces.length; ++i)
+        forces[i].init();
+}
+
+template <>
+void ForceData<DetailedMode>::clear()
 {
     for (uint64_t i = 0; i < forces.length; ++i)
         forces[i].init();
@@ -111,7 +118,6 @@ void ForceData<DetailedMode>::write_forces_txt(std::string fname, int frameid)
 
     int ai, aj;
     uint8_t idx;
-    InteractionType itype;
     std::vector<real> force_aij;
     for (uint64_t i = 0; i < forces.length; ++i)
     {
@@ -208,8 +214,6 @@ void ForceData<DetailedMode>::write_forces_bin(std::string fname, int frameid)
     binstream.write((char*)&forces_count, sizeof(int32_t));
 
     int ai, aj;
-    uint8_t idx;
-    InteractionType itype;
     std::vector<real> force_aij;
     for (uint64_t i = 0; i < forces.length; ++i)
     {

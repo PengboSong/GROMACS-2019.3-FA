@@ -18,7 +18,6 @@
 #include "gromacs/utility/real.h"
 #include "InteractionType.h"
 #include "AtomForce.h"
-#include "DetailedForce.h"
 
 namespace ForceAnal {
 
