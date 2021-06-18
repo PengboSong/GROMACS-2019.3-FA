@@ -47,8 +47,6 @@ class ForceData : ForceMode
 public:
     ForceData(real write_threshold, double average_factor);
 
-    ~ForceData();
-
     void add_detailed_force(int affected, int applied, InteractionType itype, rvec force);
 
     void clear();

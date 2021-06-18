@@ -28,8 +28,6 @@ public:
     ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop);
     ~ForceParaSet();
 
-    void check_average_steps();
-
     void set_parameters(int nfile, const t_filenm fnm[]);
 
     static bool checkterm2bool(const std::string term, bool def = true);

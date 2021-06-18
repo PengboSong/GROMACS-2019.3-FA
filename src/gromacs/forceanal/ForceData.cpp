@@ -14,14 +14,10 @@ namespace ForceAnal {
 
 template <class ForceMode>
 ForceData<ForceMode>::ForceData(real write_threshold, double average_factor)
- : avg_factor(average_factor)
+ : ForceMode(),
+   avg_factor(average_factor)
 {
     threshold = std::max<real>(write_threshold * write_threshold, NONZERO_LIMIT);
-}
-
-template <class ForceMode>
-ForceData<ForceMode>::~ForceData()
-{
 }
 
 template <>

@@ -35,7 +35,6 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
    group2_id(0)
 {
     set_parameters(nfile, fnm);
-    check_average_steps();
     
     res_bin_fn = handle_empty_string(opt2fn("-fo", nfile, fnm));
     res_txt_fn = handle_empty_string(opt2fn("-ft", nfile, fnm));
