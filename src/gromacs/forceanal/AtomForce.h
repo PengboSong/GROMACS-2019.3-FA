@@ -92,19 +92,20 @@ namespace ForceAnal {
 
         void norm2()
         {
-            int64_t i = 0;
-            while (i < forcelen)
+            int64_t idx;
+            real fx, fy, fz;
+            for (uint64_t i = 0; i < forcelen;)
             {
-                real f = forces[i] * forces[i++];
-                f += forces[i] * forces[i++];
-                f += forces[i] * forces[i++];
-                forces[i++] = f;
+                fx = forces[i++];
+                fy = forces[i++];
+                fz = forces[i++];
+                forces[i++] = fx * fx + fy * fy + fz * fz;
             }
         }
 
         void operator*=(double factor)
         {
-            for (int64_t i = 0; i < forcelen; ++i)
+            for (uint64_t i = 0; i < forcelen; ++i)
                 forces[i] *= factor;
         }
 

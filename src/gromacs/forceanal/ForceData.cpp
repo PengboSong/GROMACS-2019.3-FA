@@ -39,22 +39,22 @@ void ForceData<DetailedMode>::add_detailed_force(int affected, int applied, Inte
 template <class ForceMode>
 void ForceData<ForceMode>::clear()
 {
-    for (int64_t i = 0; i < forces.length; ++i)
+    for (uint64_t i = 0; i < forces.length; ++i)
         forces[i].init();
 }
 
 template <>
 void ForceData<SummedMode>::average_forces()
 {
-    for (int64_t i = 0; i < forces.length; ++i)
+    for (uint64_t i = 0; i < forces.length; ++i)
         forces[i] *= avg_factor;
 }
 
 template <>
 void ForceData<DetailedMode>::average_forces()
 {
-    for (int64_t i = 0; i < forces.length; ++i)
-        for (int64_t j = 0; j < forces[i].length; ++j)
+    for (uint64_t i = 0; i < forces.length; ++i)
+        for (uint64_t j = 0; j < forces[i].length; ++j)
             forces[i][j] *= avg_factor;
 }
 
@@ -73,11 +73,11 @@ void ForceData<SummedMode>::write_forces_txt(std::string fname, int frameid)
     InteractionType itype;
     real fx, fy, fz, f;
     AtomForce force_ai;
-    for (int64_t i = 0; i < forces.length; ++i)
+    for (uint64_t i = 0; i < forces.length; ++i)
     {
         ai = i - forces.offset;
         force_ai = forces[i];
-        for (int64_t j = 0; j < force_ai.atomn; ++j)
+        for (uint64_t j = 0; j < force_ai.atomn; ++j)
         {
             aj = j - force_ai.offset;
             idx = 4 * j;
@@ -113,10 +113,10 @@ void ForceData<DetailedMode>::write_forces_txt(std::string fname, int frameid)
     uint8_t idx;
     InteractionType itype;
     std::vector<real> force_aij;
-    for (int64_t i = 0; i < forces.length; ++i)
+    for (uint64_t i = 0; i < forces.length; ++i)
     {
         ai = i - forces.offset;
-        for (int64_t j = 0; j < forces[i].length; ++j)
+        for (uint64_t j = 0; j < forces[i].length; ++j)
         {
             aj = j - forces[i].offset;
             // Filter forces that are too small
@@ -156,11 +156,11 @@ void ForceData<SummedMode>::write_forces_bin(std::string fname, int32_t frameid)
     InteractionType itype;
     real fx, fy, fz, f;
     AtomForce force_ai;
-    for (int64_t i = 0; i < forces.length; ++i)
+    for (uint64_t i = 0; i < forces.length; ++i)
     {
         ai = i - forces.offset;
         force_ai = forces[i];
-        for (int64_t j = 0; j < force_ai.atomn; ++j)
+        for (uint64_t j = 0; j < force_ai.atomn; ++j)
         {
             aj = j - force_ai.offset;
             idx = 4 * j;
@@ -211,10 +211,10 @@ void ForceData<DetailedMode>::write_forces_bin(std::string fname, int frameid)
     uint8_t idx;
     InteractionType itype;
     std::vector<real> force_aij;
-    for (int64_t i = 0; i < forces.length; ++i)
+    for (uint64_t i = 0; i < forces.length; ++i)
     {
         ai = i - forces.offset;
-        for (int64_t j = 0; j < forces[i].length; ++j)
+        for (uint64_t j = 0; j < forces[i].length; ++j)
         {
             aj = j - forces[i].offset;
             // Filter forces that are too small
