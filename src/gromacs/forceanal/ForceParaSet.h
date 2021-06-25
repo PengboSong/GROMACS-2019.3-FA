@@ -53,6 +53,10 @@ protected:
     uint64_t Naverage;
 
     int group1_id, group2_id;
+
+    int group1_sid, group1_eid;
+
+    int group2_sid, group2_eid;
 };
 
 }

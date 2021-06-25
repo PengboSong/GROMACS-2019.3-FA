@@ -27,19 +27,26 @@ namespace ForceAnal {
         OffsetVector() : offset(0), length(0)
         {}
 
-        OffsetVector(int64_t sloc, int64_t eloc)
+        ~OffsetVector()
+        {
+            std::vector<T>().swap(container);
+        }
+
+        void init()
+        {
+            /*
+            container.reserve(length);
+            for (uint64_t i = 0; i < length; ++i)
+                container[i] = T();
+            */
+            container.resize(length, T());
+        }
+
+        void reset(int64_t sloc, int64_t eloc)
         {
             offset = -sloc;
             length = eloc - sloc + 1;
             init();
-        }
-
-        ~OffsetVector()
-        {}
-
-        void init()
-        {
-            container.assign(length, T());
         }
 
         T& operator[](const int64_t idx)
@@ -64,21 +71,32 @@ namespace ForceAnal {
         AtomForce() : offset(0), atomn(0), forcelen(0)
         {}
 
-        AtomForce(int64_t sloc, int64_t eloc)
+        ~AtomForce()
+        {
+            std::vector<InteractionType>().swap(itypes);
+            std::vector<real>().swap(forces);
+        }
+
+        void init()
+        {
+            /*
+            itypes.reserve(atomn);
+            for (uint64_t i = 0; i < atomn; ++i)
+                itypes[i] = 0;
+            forces.reserve(forcelen);
+            for (uint64_t i = 0; i < forcelen; ++i)
+                forces[i] = 0.;
+            */
+            itypes.resize(atomn, 0);
+            forces.resize(forcelen, 0.);
+        }
+
+        void reset(int64_t sloc, int64_t eloc)
         {
             offset = -sloc;
             atomn = eloc - sloc + 1;
             forcelen = 4 * atomn;
             init();
-        }
-
-        ~AtomForce()
-        {}
-
-        void init()
-        {
-            itypes.assign(atomn, 0);
-            forces.assign(forcelen, 0.);
         }
 
         void add(int64_t ai, InteractionType itype, rvec force)

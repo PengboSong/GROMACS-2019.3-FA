@@ -16,21 +16,21 @@
 
 ForceAnalysis::ForceAnalysis()
  : frame_count(0),
-   summed_forces(threshold, 1.0 / Naverage),
-   detailed_forces(threshold, 1.0 / Naverage)
+   summed_forces(group1_sid, group1_eid, group2_sid, group2_eid, threshold, 1.0 / Naverage),
+   detailed_forces(group1_sid, group1_eid, group2_sid, group2_eid, threshold, 1.0 / Naverage)
 {
 }
 
 ForceAnalysis::ForceAnalysis(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
  : ForceAnal::ForceParaSet(nfile, fnm, mtop),
    frame_count(0),
-   summed_forces(threshold, 1.0 / Naverage),
-   detailed_forces(threshold, 1.0 / Naverage)
+   summed_forces(group1_sid, group1_eid, group2_sid, group2_eid, threshold, 1.0 / Naverage),
+   detailed_forces(group1_sid, group1_eid, group2_sid, group2_eid, threshold, 1.0 / Naverage)
 {
 }
 
 ForceAnalysis::~ForceAnalysis()
-{    
+{
 }
 
 void ForceAnalysis::add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij)

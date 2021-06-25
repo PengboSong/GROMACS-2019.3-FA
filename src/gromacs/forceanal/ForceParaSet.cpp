@@ -21,7 +21,11 @@ ForceParaSet::ForceParaSet()
    threshold(1e-3),
    Naverage(1),
    group1_id(0),
-   group2_id(0)
+   group2_id(0),
+   group1_sid(1),
+   group1_eid(1),
+   group2_sid(1),
+   group2_eid(1)
 {
 }
 
@@ -90,6 +94,10 @@ void ForceParaSet::set_parameters(int nfile, const t_filenm fnm[])
     
     threshold = get_ereal(&inp, "threshold", 1e-6, wi);
     Naverage = get_eint64(&inp, "naverage", 1, wi);
+    group1_sid = get_eint64(&inp, "grp1_start", 1, wi);
+    group1_eid = get_eint64(&inp, "grp1_end", 1, wi);
+    group2_sid = get_eint64(&inp, "grp2_start", 1, wi);
+    group2_eid = get_eint64(&inp, "grp2_end", 1, wi);
 
     gmx::TextOutputFile outpara_stream(outpara_fn);
     write_inpfile(&outpara_stream, outpara_fn.c_str(), &inp, FALSE, WriteMdpHeader::yes, wi);

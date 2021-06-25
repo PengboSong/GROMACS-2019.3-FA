@@ -12,14 +12,6 @@
 
 namespace ForceAnal {
 
-template <class ForceMode>
-ForceData<ForceMode>::ForceData(real write_threshold, double average_factor)
- : ForceMode(),
-   avg_factor(average_factor)
-{
-    threshold = std::max<real>(write_threshold * write_threshold, NONZERO_LIMIT);
-}
-
 template <>
 void ForceData<SummedMode>::add_detailed_force(int affected, int applied, InteractionType itype, rvec force)
 {
@@ -43,7 +35,8 @@ template <>
 void ForceData<DetailedMode>::clear()
 {
     for (uint64_t i = 0; i < forces.length; ++i)
-        forces[i].init();
+        for (uint64_t j = 0; j < forces[i].length; ++j)
+            forces[i][j].init();
 }
 
 template <>
@@ -62,7 +55,7 @@ void ForceData<DetailedMode>::average_forces()
 }
 
 template <>
-void ForceData<SummedMode>::write_forces_txt(std::string fname, int frameid)
+void ForceData<SummedMode>::write_forces_txt(const std::string &fname, int frameid)
 {
     std::ofstream txtstream(fname, std::ios::app);
 
@@ -103,7 +96,7 @@ void ForceData<SummedMode>::write_forces_txt(std::string fname, int frameid)
 }
 
 template <>
-void ForceData<DetailedMode>::write_forces_txt(std::string fname, int frameid)
+void ForceData<DetailedMode>::write_forces_txt(const std::string &fname, int frameid)
 {
     std::ofstream txtstream(fname, std::ios::app);
 
@@ -141,9 +134,10 @@ void ForceData<DetailedMode>::write_forces_txt(std::string fname, int frameid)
 }
 
 template <>
-void ForceData<SummedMode>::write_forces_bin(std::string fname, int32_t frameid)
+void ForceData<SummedMode>::write_forces_bin(const std::string &fname, int32_t frameid)
 {
     std::ofstream binstream(fname, std::ios::app | std::ios::binary);
+
     
     if (!binstream.is_open())
         gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to file.\n");
@@ -195,7 +189,7 @@ void ForceData<SummedMode>::write_forces_bin(std::string fname, int32_t frameid)
 }
 
 template <>
-void ForceData<DetailedMode>::write_forces_bin(std::string fname, int frameid)
+void ForceData<DetailedMode>::write_forces_bin(const std::string &fname, int frameid)
 {
     std::ofstream binstream(fname, std::ios::app | std::ios::binary);
 

@@ -27,11 +27,18 @@ namespace ForceAnal {
         }
 
         ~InteractionForce()
-        {}
+        {
+            std::vector<real>().swap(forces);
+        }
 
         void init()
         {
-            forces.assign(Interact_FORCEVEC_LEN, 0.);
+            /*
+            forces.reserve(Interact_FORCEVEC_LEN);
+            for (uint64_t i = 0; i < Interact_FORCEVEC_LEN; ++i)
+                forces[i] = 0;
+            */
+            forces.resize(Interact_FORCEVEC_LEN, 0.);
         }
 
         void add(InteractionType itype, rvec f)
