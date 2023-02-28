@@ -590,6 +590,8 @@ void gmx::Integrator::do_rerun()
                      ddOpenBalanceRegion, ddCloseBalanceRegion);
         }
 
+        fr->FA->write_tot_forces(as_rvec_array(f.data()));
+
         fr->FA->write_frame();
 
         /* Now we have the energies and forces corresponding to the

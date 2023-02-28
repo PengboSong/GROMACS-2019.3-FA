@@ -99,7 +99,7 @@ static const int tpss[] =
 
 /* Force Analysis defined file formats */
 static const int tfafmt[] = {
-    efFOR, efFXT, efPAR
+    efFOR, efFXT, efFAR, efPAR, efFMP
 };
 #define NTFAFMT asize(tfafmt)
 
@@ -165,7 +165,9 @@ static const t_deffile deffile[efNR] =
     /* Force Analysis defined file formats */
     { eftASC, ".for", "fa", "-fo", "Force Analysis extracted binary force data file" },
     { eftASC, ".fxt", "fa", "-ft", "Force Analysis extracted text force data file" },
+    { eftASC, ".far", "fa", "-fa", "Force Analysis extracted binary atom force data file" },
     { eftASC, ".par", "fa", "-fp", "Force Analysis unique parameters setting file" },
+    { eftASC, ".fmp", "map", "-fmp", "Force Analysis atom map file" },
     { eftASC, "", "rundir", nullptr, "Run directory" }
 };
 

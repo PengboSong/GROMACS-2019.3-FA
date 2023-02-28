@@ -1757,7 +1757,8 @@ void do_dih_fup(int i, int j, int k, int l, real ddphi,
 static void
 do_dih_fup_noshiftf(int i, int j, int k, int l, real ddphi,
                     rvec r_ij, rvec r_kj, rvec r_kl,
-                    rvec m, rvec n, rvec4 f[])
+                    rvec m, rvec n, rvec4 f[],
+                    ForceAnalysis *FA)
 {
     rvec f_i, f_j, f_k, f_l;
     rvec uvec, vvec, svec;
@@ -1790,6 +1791,11 @@ do_dih_fup_noshiftf(int i, int j, int k, int l, real ddphi,
         rvec_dec(f[j], f_j);          /*  3	*/
         rvec_dec(f[k], f_k);          /*  3	*/
         rvec_inc(f[l], f_l);          /*  3	*/
+
+        if (FA)
+        {
+            FA->add_dihedral(i, j, k, l, f_i, f_j, f_k, f_l, r_ij, r_kj, r_kl);
+        }
     }
 }
 
@@ -1951,7 +1957,8 @@ pdihs_noener(int nbonds,
              const t_pbc gmx_unused *pbc, const t_graph gmx_unused *g,
              real lambda,
              const t_mdatoms gmx_unused *md, t_fcdata gmx_unused *fcd,
-             int gmx_unused *global_atom_index)
+             int gmx_unused *global_atom_index,
+             ForceAnalysis *FA)
 {
     int  i, type, ai, aj, ak, al;
     int  t1, t2, t3;
@@ -1992,7 +1999,7 @@ pdihs_noener(int nbonds,
                forceatoms[i+3] == ak &&
                forceatoms[i+4] == al);
 
-        do_dih_fup_noshiftf(ai, aj, ak, al, ddphi_tot, r_ij, r_kj, r_kl, m, n, f);
+        do_dih_fup_noshiftf(ai, aj, ak, al, ddphi_tot, r_ij, r_kj, r_kl, m, n, f, FA);
     }
 }
 
@@ -2317,6 +2324,11 @@ static real low_angres(int nbonds,
                        gmx_bool bZAxis,
                        ForceAnalysis gmx_unused *FA)
 {
+    if (FA)
+    {
+        gmx_fatal(FARGS, "low_angres not supported.");
+    }
+
     int  i, m, type, ai, aj, ak, al;
     int  t1, t2;
     real phi, cos_phi, cos_phi2, vid, vtot, dVdphi;
@@ -2544,6 +2556,11 @@ real restrangles(int nbonds,
                  int gmx_unused *global_atom_index,
                  ForceAnalysis gmx_unused *FA)
 {
+    if (FA)
+    {
+        gmx_fatal(FARGS, "restrangles not supported.");
+    }
+
     int  i, d, ai, aj, ak, type, m;
     int  t1, t2;
     real v, vtot;
@@ -2648,6 +2665,11 @@ real restrdihs(int nbonds,
                int gmx_unused *global_atom_index,
                ForceAnalysis gmx_unused *FA)
 {
+    if (FA)
+    {
+        gmx_fatal(FARGS, "restrdihs not supported.");
+    }
+
     int  i, d, type, ai, aj, ak, al;
     rvec f_i, f_j, f_k, f_l;
     rvec dx_jl;
@@ -2757,6 +2779,11 @@ real cbtdihs(int nbonds,
              int gmx_unused *global_atom_index,
              ForceAnalysis gmx_unused *FA)
 {
+    if (FA)
+    {
+        gmx_fatal(FARGS, "cbtdihs not supported.");
+    }
+
     int  type, ai, aj, ak, al, i, d;
     int  t1, t2, t3;
     real v, vtot;
@@ -2768,8 +2795,6 @@ real cbtdihs(int nbonds,
     rvec f_phi_ai, f_phi_aj, f_phi_ak, f_phi_al;
     rvec f_theta_ante_ai, f_theta_ante_aj, f_theta_ante_ak;
     rvec f_theta_post_aj, f_theta_post_ak, f_theta_post_al;
-
-
 
 
     vtot = 0.0;
@@ -3016,6 +3041,11 @@ cmap_dihs(int nbonds,
           int  gmx_unused *global_atom_index,
           ForceAnalysis gmx_unused *FA)
 {
+    if (FA)
+    {
+        gmx_fatal(FARGS, "cmap not supported.");
+    }
+
     int         i, n;
     int         ai, aj, ak, al, am;
     int         a1i, a1j, a1k, a1l, a2i, a2j, a2k, a2l;

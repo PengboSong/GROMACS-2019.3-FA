@@ -1,13 +1,13 @@
 /*
- * InteractionType.cpp
- *
- *  Created on: Sept 30, 2020
- *      Author: Pengbo Song
- */
+    InteractionType.cpp
+    Author: Pengbo Song [pbsong-ccme2019@pku.edu.cn]
+    Date created: 2020/09/30
+    Description: Force interaction type identifier.
+*/
 
 #include "InteractionType.h"
 
-uint8_t ForceAnal::index_itype(ForceAnal::InteractionType itype)
+uint8_t ForceAnal::itype2index(ForceAnal::InteractionType itype)
 {
     if (itype == 0) return 0;
 

@@ -19,6 +19,19 @@ static inline void rvec_opp(const rvec a, rvec b)
     b[ZZ] = z;
 }
 
+static inline void rvec_opp(rvec a)
+{
+    real x, y, z;
+
+    x = -a[XX];
+    y = -a[YY];
+    z = -a[ZZ];
+
+    a[XX] = x;
+    a[YY] = y;
+    a[ZZ] = z;
+}
+
 static inline bool rvec_small(const rvec a, real b)
 {
     if (a[XX] > b)
@@ -26,6 +39,17 @@ static inline bool rvec_small(const rvec a, real b)
     if (a[YY] > b)
         return false;
     if (a[ZZ] > b)
+        return false;
+    return true;
+}
+
+static inline bool rvec_abs_small(const rvec a, real b)
+{
+    if (std::abs(a[XX]) > b)
+        return false;
+    if (std::abs(a[YY]) > b)
+        return false;
+    if (std::abs(a[ZZ]) > b)
         return false;
     return true;
 }

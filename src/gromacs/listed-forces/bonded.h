@@ -350,7 +350,8 @@ void
                  const struct t_graph gmx_unused *g,
                  real lambda,
                  const t_mdatoms gmx_unused *md, t_fcdata gmx_unused *fcd,
-                 int gmx_unused *global_atom_index);
+                 int gmx_unused *global_atom_index,
+                 ForceAnalysis *FA);
 
 /* TODO these declarations should be internal to the module */
 

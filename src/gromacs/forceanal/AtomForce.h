@@ -1,143 +1,92 @@
 /*
- * AtomForce.h
- *
- *  Created on: June 16, 2021
- *      Author: Pengbo Song
- */
+    AtomForce.h
+    Author: Pengbo Song [pbsong-ccme2019@pku.edu.cn]
+    Date created: 2021/07/16
+    Description: 
+*/
 
 #ifndef SRC_GROMACS_FORCEANAL_ATOMFORCE_H_
 #define SRC_GROMACS_FORCEANAL_ATOMFORCE_H_
 
-#include <vector>
-
-#include "gromacs/math/extended_vec.h"
-#include "gromacs/math/vec.h"
-#include "gromacs/math/vectypes.h"
-#include "gromacs/utility/real.h"
-#include "ForceAnalConst.h"
+#include "ForceAnalDef.h"
 #include "InteractionForce.h"
-#include "InteractionType.h"
 
 namespace ForceAnal {
-    template<typename T>
-    class OffsetVector
+
+class AtomForce
+{
+using index = uint64_t;
+
+public:
+    AtomForce() : offset(0), atomn(0), forcelen(0) {}
+
+    void clear()
     {
-        public:
+        itypes.assign(atomn, 0);
+        forces.assign(forcelen, 0.);
+    }
 
-        OffsetVector() : offset(0), length(0)
-        {}
+    index size() { return atomn; }
 
-        ~OffsetVector()
-        {
-            std::vector<T>().swap(container);
-        }
+    index id_begin() { return offset; }
 
-        void init()
-        {
-            /*
-            container.reserve(length);
-            for (uint64_t i = 0; i < length; ++i)
-                container[i] = T();
-            */
-            container.resize(length, T());
-        }
+    index id_end() { return offset + atomn; }
 
-        void reset(int64_t sloc, int64_t eloc)
-        {
-            offset = -sloc;
-            length = eloc - sloc + 1;
-            init();
-        }
+    InteractionType* itypes_data() { return itypes.data(); }
 
-        T& operator[](const int64_t idx)
-        {
-            return container[idx + offset];
-        }
+    real* forces_data() { return forces.data(); }
 
-        int64_t offset;
-
-        uint64_t length;
-
-        std::vector<T> container;
-    };
-    
-    using DetailedAtomForce = OffsetVector<InteractionForce>;
-    using DetailedForce = OffsetVector<DetailedAtomForce>;
-
-    class AtomForce
+    void resize(index sloc, index eloc)
     {
-        public:
+        offset = sloc;
+        atomn = eloc - sloc;
+        forcelen = 4 * atomn;
+        itypes.resize(atomn, 0);
+        forces.resize(forcelen, 0.);
+    }
 
-        AtomForce() : offset(0), atomn(0), forcelen(0)
-        {}
+    void add(index ai, InteractionType itype, rvec force)
+    {
+        if (ai < offset) return;            
+        index loc = ai - offset;
+        if (loc >= atomn) return;
+        index floc = 4 * loc;
+        forces[floc + XX] += force[XX];
+        forces[floc + YY] += force[YY];
+        forces[floc + ZZ] += force[ZZ];
+        itypes[loc] |= itype;
+    }
 
-        ~AtomForce()
+    void norm2()
+    {
+        real fx, fy, fz;
+        for (index i = 0; i < forcelen;)
         {
-            std::vector<InteractionType>().swap(itypes);
-            std::vector<real>().swap(forces);
+            fx = forces[i++];
+            fy = forces[i++];
+            fz = forces[i++];
+            forces[i++] = fx * fx + fy * fy + fz * fz;
         }
+    }
 
-        void init()
-        {
-            /*
-            itypes.reserve(atomn);
-            for (uint64_t i = 0; i < atomn; ++i)
-                itypes[i] = 0;
-            forces.reserve(forcelen);
-            for (uint64_t i = 0; i < forcelen; ++i)
-                forces[i] = 0.;
-            */
-            itypes.resize(atomn, 0);
-            forces.resize(forcelen, 0.);
-        }
+    void operator*=(double factor)
+    {
+        for (index i = 0; i < forcelen; ++i)
+            forces[i] *= factor;
+    }
 
-        void reset(int64_t sloc, int64_t eloc)
-        {
-            offset = -sloc;
-            atomn = eloc - sloc + 1;
-            forcelen = 4 * atomn;
-            init();
-        }
+private:
+    index offset;
 
-        void add(int64_t ai, InteractionType itype, rvec force)
-        {
-            int64_t idx = 4 * (ai + offset);
-            forces[idx + XX] += force[XX];
-            forces[idx + YY] += force[YY];
-            forces[idx + ZZ] += force[ZZ];
-            itypes[ai + offset] &= itype;
-        }
+    index atomn;
 
-        void norm2()
-        {
-            real fx, fy, fz;
-            for (uint64_t i = 0; i < forcelen;)
-            {
-                fx = forces[i++];
-                fy = forces[i++];
-                fz = forces[i++];
-                forces[i++] = fx * fx + fy * fy + fz * fz;
-            }
-        }
+    index forcelen;
 
-        void operator*=(double factor)
-        {
-            for (uint64_t i = 0; i < forcelen; ++i)
-                forces[i] *= factor;
-        }
+    std::vector<InteractionType> itypes;
 
-        int64_t offset;
+    std::vector<real> forces;
+};
 
-        uint64_t atomn;
-
-        uint64_t forcelen;
-
-        std::vector<InteractionType> itypes;
-
-        std::vector<real> forces;
-    };
-
-    using SummedForce = OffsetVector<AtomForce>;
 }
 
 #endif /* SRC_GROMACS_FORCEANAL_ATOMFORCE_H_ */

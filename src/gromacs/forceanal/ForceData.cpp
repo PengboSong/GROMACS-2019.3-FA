@@ -1,172 +1,159 @@
 /*
- * ForceData.cpp
- *
- *  Created on: Sept 30, 2020
- *      Author: Pengbo Song
- */
+    ForceData.cpp
+    Author: Pengbo Song [pbsong-ccme2019@pku.edu.cn]
+    Date created: 2020/09/30
+    Description: Lowlevel data container and analysis tool for Force Analysis.
+*/
 
 #include "ForceData.h"
 
-#include "gromacs/math/vec.h"
-#include "gromacs/utility/fatalerror.h"
-
 namespace ForceAnal {
 
-template <>
-void ForceData<SummedMode>::add_detailed_force(int affected, int applied, InteractionType itype, rvec force)
+SummedMode::SummedMode()
+{
+}
+
+SummedMode::SummedMode(const GrpIdx& grp1idx, const GrpIdx& grp2idx)
+{
+    forces.resize(grp1idx.first, grp1idx.second);
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
+        forces[i].resize(grp2idx.first, grp2idx.second);
+}
+
+void SummedMode::add_detailed_force(int affected, int applied, InteractionType itype, rvec force)
 {
     forces[affected].add(applied, itype, force);
 }
 
-template <>
-void ForceData<DetailedMode>::add_detailed_force(int affected, int applied, InteractionType itype, rvec force)
+void SummedMode::clear()
+{
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
+        forces[i].clear();
+}
+
+DetailedMode::DetailedMode()
+{
+}
+
+DetailedMode::DetailedMode(const GrpIdx& grp1idx, const GrpIdx& grp2idx)
+{
+    forces.resize(grp1idx.first, grp1idx.second);
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
+        forces[i].resize(grp2idx.first, grp2idx.second);
+}
+
+void DetailedMode::add_detailed_force(int affected, int applied, InteractionType itype, rvec force)
 {
     forces[affected][applied].add(itype, force);
 }
 
-template <>
-void ForceData<SummedMode>::clear()
+void DetailedMode::clear()
 {
-    for (uint64_t i = 0; i < forces.length; ++i)
-        forces[i].init();
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
+        for (uint64_t j = forces[i].id_begin(); j < forces[i].id_end(); ++j)
+            forces[i][j].clear();
 }
 
-template <>
-void ForceData<DetailedMode>::clear()
+ListMode::ListMode()
 {
-    for (uint64_t i = 0; i < forces.length; ++i)
-        for (uint64_t j = 0; j < forces[i].length; ++j)
-            forces[i][j].init();
 }
 
-template <>
-void ForceData<SummedMode>::average_forces()
+void ListMode::add_detailed_force(int affected, int applied, InteractionType itype, rvec force)
 {
-    for (uint64_t i = 0; i < forces.length; ++i)
-        forces[i] *= avg_factor;
+    forces.push_back(PairForce(affected, applied, itype, force));
 }
 
-template <>
-void ForceData<DetailedMode>::average_forces()
+void ListMode::clear()
 {
-    for (uint64_t i = 0; i < forces.length; ++i)
-        for (uint64_t j = 0; j < forces[i].length; ++j)
-            forces[i][j] *= avg_factor;
+    forces.clear();
+    std::vector<PairForce>().swap(forces);
 }
 
-template <>
-void ForceData<SummedMode>::write_forces_txt(const std::string &fname, int frameid)
+ForceData::ForceData()
+ : lowlim(NONZERO_LIMIT), avgfactor(1.0)
 {
-    std::ofstream txtstream(fname, std::ios::app);
+}
 
-    if (!txtstream.is_open())
-        gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to file.\n");
-    
-    txtstream << "START FRAME " << frameid << std::endl;
+ForceData::ForceData(real squared_threshold, real average_factor)
+ : lowlim(squared_threshold), avgfactor(average_factor)
+{
+}
+
+SummedData::SummedData()
+{
+}
+
+SummedData::SummedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold, uint64_t Naverage)
+ : SummedMode(grp1idx, grp2idx), ForceData(squared_threshold, 1.0 / Naverage)
+{
+}
+
+void SummedData::average_forces()
+{
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
+        forces[i] *= avgfactor;
+}
+
+void SummedData::write_forces_txt(std::ofstream& txtstream)
+{
+    if (!txtstream.is_open()) return;
 
     int ai, aj;
     int64_t idx;
     InteractionType itype;
     real fx, fy, fz, f;
-    AtomForce force_ai;
-    for (uint64_t i = 0; i < forces.length; ++i)
+    InteractionType* itypes;
+    real* fs;
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
     {
-        ai = i - forces.offset;
-        force_ai = forces[i];
-        for (uint64_t j = 0; j < force_ai.atomn; ++j)
+        ai = static_cast<int>(i);
+        for (uint64_t j = 0; j < forces[i].size(); ++j)
         {
-            aj = j - force_ai.offset;
+            aj = j + forces[i].id_begin();
+            itypes = forces[i].itypes_data();
+            fs = forces[i].forces_data();
             idx = 4 * j;
-            itype = force_ai.itypes[j];
-            fx = force_ai.forces[idx + XX];
-            fy = force_ai.forces[idx + YY];
-            fz = force_ai.forces[idx + ZZ];
+            itype = itypes[j];
+            fx = fs[idx + XX];
+            fy = fs[idx + YY];
+            fz = fs[idx + ZZ];
             f = fx * fx + fy * fy + fz * fz;
             // Filter forces that are too small
-            if (f > threshold)
+            if (f > lowlim)
             {
                 txtstream << ai << ' ' << aj << ' ' << fx << ' ' << fy << ' ' << fz << ' ' << (int)itype << std::endl;
             }
         }
     }
-
-    txtstream << "END FRAME " << frameid << std::endl;
-
-    txtstream.close();
 }
 
-template <>
-void ForceData<DetailedMode>::write_forces_txt(const std::string &fname, int frameid)
+void SummedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr)
 {
-    std::ofstream txtstream(fname, std::ios::app);
+    if (!binstream.is_open()) return;
+    binstream.seekp(saddr);
 
-    if (!txtstream.is_open())
-        gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to file.\n");
-    
-    txtstream << "START FRAME " << frameid << std::endl;
-
-    int ai, aj;
-    uint8_t idx;
-    std::vector<real> force_aij;
-    for (uint64_t i = 0; i < forces.length; ++i)
-    {
-        ai = i - forces.offset;
-        for (uint64_t j = 0; j < forces[i].length; ++j)
-        {
-            aj = j - forces[i].offset;
-            // Filter forces that are too small
-            if (forces[i][j].sum() > threshold)
-            {
-                force_aij = forces[i][j].forces;
-                txtstream << "Pair " << ai << ' ' << aj << std::endl;
-                for (uint8_t k = 0; k < (Interact_COUNT + 1); ++k)
-                {
-                    idx = 4 * k;
-                    txtstream << force_aij[idx + XX] << ' ' << force_aij[idx + YY] << ' ' << force_aij[idx + ZZ] << ' ' << force_aij[idx + XYZ] << std::endl; 
-                }
-            }
-        }
-    }
-
-    txtstream << "END FRAME " << frameid << std::endl;
-
-    txtstream.close();
-}
-
-template <>
-void ForceData<SummedMode>::write_forces_bin(const std::string &fname, int32_t frameid)
-{
-    std::ofstream binstream(fname, std::ios::app | std::ios::binary);
-
-    
-    if (!binstream.is_open())
-        gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to file.\n");
-    
-    int32_t forces_count = 0;
-    uint64_t initpos = binstream.tellp();
-    binstream.write((char*)&frameid, sizeof(int32_t));
-    binstream.write((char*)&forces_count, sizeof(int32_t));
-    
     int32_t ai, aj;
     int64_t idx;
     InteractionType itype;
     real fx, fy, fz, f;
-    AtomForce force_ai;
-    for (uint64_t i = 0; i < forces.length; ++i)
+    InteractionType* itypes;
+    real* fs;
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
     {
-        ai = i - forces.offset;
-        force_ai = forces[i];
-        for (uint64_t j = 0; j < force_ai.atomn; ++j)
+        ai = static_cast<int>(i);
+        for (uint64_t j = 0; j < forces[i].size(); ++j)
         {
-            aj = j - force_ai.offset;
+            aj = j + forces[i].id_begin();
+            itypes = forces[i].itypes_data();
+            fs = forces[i].forces_data();
             idx = 4 * j;
-            itype = force_ai.itypes[j];
-            fx = force_ai.forces[idx + XX];
-            fy = force_ai.forces[idx + YY];
-            fz = force_ai.forces[idx + ZZ];
+            itype = itypes[j];
+            fx = fs[idx + XX];
+            fy = fs[idx + YY];
+            fz = fs[idx + ZZ];
             f = fx * fx + fy * fy + fz * fz;
             // Filter forces that are too small
-            if (f > threshold)
+            if (f > lowlim)
             {
                 ++forces_count;
                 binstream.write((char*)&ai, sizeof(int32_t));
@@ -179,56 +166,121 @@ void ForceData<SummedMode>::write_forces_bin(const std::string &fname, int32_t f
             }
         }
     }
-
-    // Get forces count and back to write at the start of the frame
-    binstream.seekp(initpos + sizeof(int32_t));
-    binstream.write((char*)&frameid, sizeof(int32_t));
-    binstream.seekp(std::ios::end);
-
-    binstream.close();
+    eaddr = binstream.tellp();
 }
 
-template <>
-void ForceData<DetailedMode>::write_forces_bin(const std::string &fname, int frameid)
+DetailedData::DetailedData()
 {
-    std::ofstream binstream(fname, std::ios::app | std::ios::binary);
+}
 
-    if (!binstream.is_open())
-        gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to file.\n");
-    
-    binstream << "START FRAME " << frameid << std::endl;
+DetailedData::DetailedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold, uint64_t Naverage)
+ : DetailedMode(grp1idx, grp2idx), ForceData(squared_threshold, 1.0 / Naverage)
+{
+}
 
-    int32_t forces_count = 0;
-    uint64_t initpos = binstream.tellp();
-    binstream.write((char*)&frameid, sizeof(int32_t));
-    binstream.write((char*)&forces_count, sizeof(int32_t));
+void DetailedData::average_forces()
+{
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
+        for (uint64_t j = forces[i].id_begin(); j < forces[i].id_end(); ++j)
+            forces[i][j] *= avgfactor;
+}
+
+void DetailedData::write_forces_txt(std::ofstream& txtstream)
+{
+    if (!txtstream.is_open()) return;
 
     int ai, aj;
-    std::vector<real> force_aij;
-    for (uint64_t i = 0; i < forces.length; ++i)
+    uint8_t idx;
+    real* force_aij;
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
     {
-        ai = i - forces.offset;
-        for (uint64_t j = 0; j < forces[i].length; ++j)
+        ai = static_cast<int>(i);
+        for (uint64_t j = forces[i].id_begin(); j < forces[i].id_end(); ++j)
         {
-            aj = j - forces[i].offset;
+            aj = static_cast<int>(j);
             // Filter forces that are too small
-            if (forces[i][j].sum() > threshold)
+            if (forces[i][j].sum() > lowlim)
+            {
+                force_aij = forces[i][j].data();
+                txtstream << "Pair " << ai << ' ' << aj << std::endl;
+                for (uint8_t k = 0; k < (Interact_COUNT + 1); ++k)
+                {
+                    idx = 4 * k;
+                    txtstream << force_aij[idx + XX] << ' ' << force_aij[idx + YY] << ' ' << force_aij[idx + ZZ] << ' ' << force_aij[idx + XYZ] << std::endl; 
+                }
+            }
+        }
+    }
+}
+
+void DetailedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr)
+{
+    if (!binstream.is_open()) return;
+    binstream.seekp(saddr);
+
+    int ai, aj;
+    real* force_aij;
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
+    {
+        ai = static_cast<int>(i);
+        for (uint64_t j = forces[i].id_begin(); j < forces[i].id_end(); ++j)
+        {
+            aj = static_cast<int>(j);
+            // Filter forces that are too small
+            if (forces[i][j].sum() > lowlim)
             {
                 ++forces_count;
-                force_aij = forces[i][j].forces;
+                force_aij = forces[i][j].data();
                 binstream.write((char*)&ai, sizeof(int32_t));
                 binstream.write((char*)&aj, sizeof(int32_t));
                 binstream.write((char*)&force_aij, Interact_FORCEVEC_LEN * sizeof(real));
             }
         }
     }
+    eaddr = binstream.tellp();
+}
 
-    // Get forces count and back to write at the start of the frame
-    binstream.seekp(initpos + sizeof(int32_t));
-    binstream.write((char*)&frameid, sizeof(int32_t));
-    binstream.seekp(std::ios::end);
+ListData::ListData()
+{
+}
 
-    binstream.close();
+ListData::ListData(real squared_threshold)
+ : ListMode(), ForceData(squared_threshold, 1.0)
+{
+}
+
+void ListData::write_forces_txt(std::ofstream& txtstream)
+{
+    if (!txtstream.is_open()) return;
+
+    for (const PairForce &pf : forces)
+    {
+        // Filter forces that are too small
+        if (pf.f[XYZ] > lowlim)
+        {
+            txtstream << pf.i << ' ' << pf.j << ' ' << pf.f[XX] << ' ' << pf.f[YY] << ' ' << pf.f[ZZ] << ' ' << (int)pf.type << std::endl;
+        }
+    }
+}
+
+void ListData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr)
+{
+    if (!binstream.is_open()) return;
+    binstream.seekp(saddr);
+
+    for (const PairForce &pf : forces)
+    {
+        // Filter forces that are too small
+        if (pf.f[XYZ] > lowlim)
+        {
+            ++forces_count;            
+            binstream.write((char*)&pf.i, sizeof(int32_t));
+            binstream.write((char*)&pf.j, sizeof(int32_t));
+            binstream.write((char*)&pf.type, sizeof(InteractionType));
+            binstream.write((char*)&pf.f, sizeof(real) * 4);
+        }
+    }
+    eaddr = binstream.tellp();
 }
 
 }
