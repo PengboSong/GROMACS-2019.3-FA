@@ -80,4 +80,17 @@ static inline void dsvimul(rvec a, double b)
     a[ZZ] = z;
 }
 
+static inline void copy_rvec_to_2dvec(const rvec a, double *b)
+{
+    b[XX] = a[XX];
+    b[YY] = a[YY];
+}
+
+static inline void copy_rvec_to_3dvec(const rvec a, double *b)
+{
+    b[XX] = a[XX];
+    b[YY] = a[YY];
+    b[ZZ] = a[ZZ];
+}
+
 #endif /* SRC_GROMACS_MATH_EXTENDED_VEC_H_ */

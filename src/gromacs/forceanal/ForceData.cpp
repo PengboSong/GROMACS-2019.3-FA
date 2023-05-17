@@ -127,7 +127,7 @@ void SummedData::write_forces_txt(std::ofstream& txtstream)
     }
 }
 
-void SummedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr)
+void SummedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const int64_t& saddr, int64_t& eaddr)
 {
     if (!binstream.is_open()) return;
     binstream.seekp(saddr);
@@ -213,7 +213,7 @@ void DetailedData::write_forces_txt(std::ofstream& txtstream)
     }
 }
 
-void DetailedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr)
+void DetailedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const int64_t& saddr, int64_t& eaddr)
 {
     if (!binstream.is_open()) return;
     binstream.seekp(saddr);
@@ -263,7 +263,7 @@ void ListData::write_forces_txt(std::ofstream& txtstream)
     }
 }
 
-void ListData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr)
+void ListData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const int64_t& saddr, int64_t& eaddr)
 {
     if (!binstream.is_open()) return;
     binstream.seekp(saddr);

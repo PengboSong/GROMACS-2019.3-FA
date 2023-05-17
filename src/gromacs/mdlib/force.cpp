@@ -259,7 +259,9 @@ void do_force_lowlevel(t_forcerec           *fr,
         wallcycle_sub_stop(wcycle, ewcsNONBONDED);
     }
 
+#ifdef FORCEANAL_DEBUG
     fr->FA->write_atom_forces("internal_nb_forces.far", forceForUseWithShiftForces);
+#endif
 
 #if GMX_MPI
     if (TAKETIME)
@@ -343,8 +345,9 @@ void do_force_lowlevel(t_forcerec           *fr,
                     DOMAINDECOMP(cr) ? cr->dd->globalAtomIndices.data() : nullptr,
                     flags);
 
+#ifdef FORCEANAL_DEBUG
     fr->FA->write_atom_forces("internal_nb+b_forces.far", forceForUseWithShiftForces);
-
+#endif
 
     *cycles_pme = 0;
 

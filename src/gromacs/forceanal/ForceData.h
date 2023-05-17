@@ -94,7 +94,7 @@ public:
 
     void write_forces_txt(std::ofstream& txtstream);
 
-    void write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr);
+    void write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const int64_t& saddr, int64_t& eaddr);
 };
 
 class DetailedData : public DetailedMode, public ForceData
@@ -108,7 +108,7 @@ public:
 
     void write_forces_txt(std::ofstream& txtstream);
 
-    void write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr);
+    void write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const int64_t& saddr, int64_t& eaddr);
 };
 
 class ListData : public ListMode, public ForceData
@@ -120,7 +120,7 @@ public:
 
     void write_forces_txt(std::ofstream& txtstream);
 
-    void write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr);
+    void write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const int64_t& saddr, int64_t& eaddr);
 };
 
 }

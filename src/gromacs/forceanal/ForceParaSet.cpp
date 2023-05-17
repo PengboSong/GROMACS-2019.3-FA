@@ -25,7 +25,8 @@ ForceParaSet::ForceParaSet()
    datamode(DATA_MODE::None),
    output_type(OUT_NOTHING),
    forceunit(FORCE_UNIT::Atom),
-   threshold(1e-3),
+   threshold(1.0E-3F),
+   force_threshold(5.0E-3F),
    atomn(0),
    resn(0),
    moln(0),
@@ -40,7 +41,8 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_glob
    datamode(DATA_MODE::None),
    output_type(OUT_NOTHING),
    forceunit(FORCE_UNIT::Atom),
-   threshold(1e-3),
+   threshold(1.0E-3F),
+   force_threshold(5.0E-3F),
    atomn(top_global->natoms),
    Naverage(1)
 {    
@@ -261,7 +263,7 @@ void ForceParaSet::setParas(int nfile, const t_filenm fnm[])
     else if (forceunit_term == "molecule")
         forceunit = FORCE_UNIT::Molecule;
     
-    threshold = get_ereal(&inp, "threshold", 1e-3, wi);
+    threshold = get_ereal(&inp, "threshold", 1.0E-3F, wi);
     threshold *= threshold;
     Naverage = get_eint64(&inp, "naverage", 1, wi);
     grp1nm = get_estr(&inp, "group1", "System");

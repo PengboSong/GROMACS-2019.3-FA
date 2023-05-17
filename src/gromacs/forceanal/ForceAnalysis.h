@@ -36,7 +36,7 @@ public:
 
     bool in_grp2(const int idx);
 
-    bool in_grp(int& i, int& j, rvec f_ij);
+    bool in_grp(int& i, int& j);
 
     void add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij);
 
@@ -46,7 +46,9 @@ public:
 
     void add_nonbonded_vdw(int i, int j, real pf_vdw, real dx, real dy, real dz);
 
-    void tri_res(rvec f_i, rvec r_ij, rvec r_ik, rvec f_ij, rvec f_ik);
+    int dbres(rvec f_i, rvec r_ij, rvec r_ik, rvec f_ij, rvec f_ik);
+
+    int trires(rvec f_i, rvec r_ij, rvec r_ik, rvec r_il, rvec f_ij, rvec f_ik, rvec f_il);
 
     void add_angle(int ai, int aj, int ak, rvec f_i, rvec gmx_unused f_j, rvec f_k, rvec r_ij, rvec r_kj, rvec r_ik);
 

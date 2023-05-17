@@ -65,6 +65,14 @@ protected:
     // 
     real threshold;
 
+    // Used to check force resolution accuracy
+    // Resolved pairwise forces should satisfy equations like
+    // Fi = Fij + Fik and Fij = Fji. If numerical solution of expressions
+    // including Fi - Fij - Fik and Fij - Fji is close enough to 0, then
+    // those necessary equations is considered as satisfied. The upper bound
+    // of deviation is limited by this value.
+    real force_threshold;
+
     // Total atom number in system
     uint32_t atomn;
 

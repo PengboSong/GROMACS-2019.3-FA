@@ -594,6 +594,8 @@ void gmx::Integrator::do_rerun()
 
         fr->FA->write_frame();
 
+        fr->FA->next_frame();
+
         /* Now we have the energies and forces corresponding to the
          * coordinates at time t.
          */
