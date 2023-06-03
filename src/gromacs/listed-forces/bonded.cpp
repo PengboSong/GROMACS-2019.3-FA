@@ -3039,13 +3039,8 @@ cmap_dihs(int nbonds,
           real gmx_unused lambda, real gmx_unused *dvdlambda,
           const t_mdatoms gmx_unused *md, t_fcdata gmx_unused *fcd,
           int  gmx_unused *global_atom_index,
-          ForceAnalysis gmx_unused *FA)
+          ForceAnalysis *FA)
 {
-    if (FA)
-    {
-        gmx_fatal(FARGS, "cmap not supported.");
-    }
-
     int         i, n;
     int         ai, aj, ak, al, am;
     int         a1i, a1j, a1k, a1l, a2i, a2j, a2k, a2l;
@@ -3352,6 +3347,13 @@ cmap_dihs(int nbonds,
             f[a1l][i] = f[a1l][i] + f1_l[i]; /* h1[i] */
         }
 
+        if (FA)
+        {
+            FA->add_pairforce(a1i, a1j, ForceAnal::Interact_DIHEDRAL, f1);
+            FA->add_pairforce(a1k, a1j, ForceAnal::Interact_DIHEDRAL, g1);
+            FA->add_pairforce(a1k, a1l, ForceAnal::Interact_DIHEDRAL, h1);
+        }
+
         /* Do forces - second torsion */
         fg2       = iprod(r2_ij, r2_kj);
         hg2       = iprod(r2_kl, r2_kj);
@@ -3379,6 +3381,13 @@ cmap_dihs(int nbonds,
             f[a2j][i] = f[a2j][i] + f2_j[i]; /* - f2[i] - g2[i] */
             f[a2k][i] = f[a2k][i] + f2_k[i]; /* h2[i] + g2[i] */
             f[a2l][i] = f[a2l][i] + f2_l[i]; /* - h2[i] */
+        }
+
+        if (FA)
+        {
+            FA->add_pairforce(a2i, a2j, ForceAnal::Interact_DIHEDRAL, f2);
+            FA->add_pairforce(a2k, a2j, ForceAnal::Interact_DIHEDRAL, g2);
+            FA->add_pairforce(a2k, a2l, ForceAnal::Interact_DIHEDRAL, h2);
         }
 
         /* Shift forces */

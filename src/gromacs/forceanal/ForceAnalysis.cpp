@@ -476,12 +476,12 @@ void ForceAnalysis::add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec 
     }
 #endif
 
-    add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
-    add_pairforce(ai, al, ForceAnal::Interact_ANGLE, f_il);
-    add_pairforce(aj, ak, ForceAnal::Interact_ANGLE, f_jk);
-    add_pairforce(aj, al, ForceAnal::Interact_ANGLE, f_jl);
-    add_pairforce(ak, ai, ForceAnal::Interact_ANGLE, f_ki);
-    add_pairforce(ak, al, ForceAnal::Interact_ANGLE, f_kl);
+    add_pairforce(ai, aj, ForceAnal::Interact_DIHEDRAL, f_ij);
+    add_pairforce(ai, al, ForceAnal::Interact_DIHEDRAL, f_il);
+    add_pairforce(aj, ak, ForceAnal::Interact_DIHEDRAL, f_jk);
+    add_pairforce(aj, al, ForceAnal::Interact_DIHEDRAL, f_jl);
+    add_pairforce(ak, ai, ForceAnal::Interact_DIHEDRAL, f_ki);
+    add_pairforce(ak, al, ForceAnal::Interact_DIHEDRAL, f_kl);
 }
 
 void ForceAnalysis::write_frame(bool write_last_frame)
