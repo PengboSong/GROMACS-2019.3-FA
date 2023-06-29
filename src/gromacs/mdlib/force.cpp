@@ -259,9 +259,10 @@ void do_force_lowlevel(t_forcerec           *fr,
         wallcycle_sub_stop(wcycle, ewcsNONBONDED);
     }
 
-#ifdef FORCEANAL_DEBUG
-    fr->FA->write_atom_forces("internal_nb_forces.far", forceForUseWithShiftForces);
-#endif
+    if (fr->FA)
+    {
+        fr->FA->write_atom_forces(ForceAnal::OUT_FORCE_TYPE::AtomForceNonbonded, forceForUseWithShiftForces);
+    }
 
 #if GMX_MPI
     if (TAKETIME)
@@ -345,9 +346,10 @@ void do_force_lowlevel(t_forcerec           *fr,
                     DOMAINDECOMP(cr) ? cr->dd->globalAtomIndices.data() : nullptr,
                     flags);
 
-#ifdef FORCEANAL_DEBUG
-    fr->FA->write_atom_forces("internal_nb+b_forces.far", forceForUseWithShiftForces);
-#endif
+    if (fr->FA)
+    {
+        fr->FA->write_atom_forces(ForceAnal::OUT_FORCE_TYPE::AtomForceNonbondedBonded, forceForUseWithShiftForces);
+    }
 
     *cycles_pme = 0;
 
@@ -529,7 +531,7 @@ void do_force_lowlevel(t_forcerec           *fr,
                              box, cr, md->homenr,
                              ewaldOutput.vir_q, fr->ic->ewaldcoeff_q,
                              lambda[efptCOUL], &ewaldOutput.dvdl[efptCOUL],
-                             fr->ewald_table);
+                             fr->ewald_table, fr->FA);
         }
 
         /* Note that with separate PME nodes we get the real energies later */

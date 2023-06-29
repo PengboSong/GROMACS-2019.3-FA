@@ -32,11 +32,13 @@ ForceParaSet::ForceParaSet()
    moln(0),
    Naverage(1),
    grp1idx(0, 0),
-   grp2idx(0, 0)
+   grp2idx(0, 0),
+   eeltype(eelCUT),
+   vdwtype(evdwCUT)
 {
 }
 
-ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_global)
+ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_global, const t_inputrec *inputrec)
  : outpara_fn("faout.par"),
    datamode(DATA_MODE::None),
    output_type(OUT_NOTHING),
@@ -44,7 +46,9 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_glob
    threshold(1.0E-3F),
    force_threshold(5.0E-3F),
    atomn(top_global->natoms),
-   Naverage(1)
+   Naverage(1),
+   eeltype(inputrec->coulombtype),
+   vdwtype(inputrec->vdwtype)
 {    
     // -fo is optional
     res_bin_fn = handle_empty_string(opt2fn_null("-fo", nfile, fnm));
@@ -52,10 +56,26 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_glob
     res_txt_fn = handle_empty_string(opt2fn_null("-ft", nfile, fnm));
     // -fa is optional
     totf_bin_fn = handle_empty_string(opt2fn_null("-fa", nfile, fnm));
+    // -fd is optional
+    fdev_bin_fn = handle_empty_string(opt2fn_null("-fd", nfile, fnm));
     // -fn is optional
     index_fn = handle_empty_string(opt2fn_null("-fn", nfile, fnm));
     // -fmp is optional
     map_fn = handle_empty_string(opt2fn_null("-fmp", nfile, fnm));
+
+    // Derived other atom force data filenames from the specified one
+    std::string::size_type sz = totf_bin_fn.find_first_of('.');
+    if (sz == std::string::npos)
+    {
+        atomf_nb_bin_fn = totf_bin_fn + "_nb";
+        atomf_nb_b_bin_fn = totf_bin_fn + "_nb+b";
+    }
+    else
+    {
+        std::string atomf_prefix = totf_bin_fn.substr(0, sz), atomf_suffix = totf_bin_fn.substr(sz);
+        atomf_nb_bin_fn = atomf_prefix + "_nb" + atomf_suffix;
+        atomf_nb_b_bin_fn = atomf_prefix + "_nb+b" + atomf_suffix;
+    }
     
     setParas(nfile, fnm);
 
@@ -86,7 +106,7 @@ std::string ForceParaSet::handle_empty_string(const char *str)
         return std::string();
 }
 
-void ForceParaSet::handle_index(FORCE_UNIT forceunit, const int* block, const int blocknr, const std::vector<atomindex>& resmap, GrpIdx& grpidx, std::vector<atomindex>& excl)
+void ForceParaSet::handle_index(FORCE_UNIT forceunit, const int* block, const int blocknr, const std::vector<atomindex>& resmap, GrpIdx& grpidx, GrpIdx& grpaid, std::vector<atomindex>& excl)
 {
     int grpstart, grpend, grplen;
     if (forceunit == FORCE_UNIT::Atom)
@@ -96,6 +116,8 @@ void ForceParaSet::handle_index(FORCE_UNIT forceunit, const int* block, const in
         grplen = grpend - grpstart;
         grpidx.first = grpstart;
         grpidx.second = grpend;
+        grpaid.first = grpstart;
+        grpaid.second = grpend;
         if (blocknr < grplen)
         {
             std::vector<int> filled_range(grplen, 0);
@@ -108,6 +130,9 @@ void ForceParaSet::handle_index(FORCE_UNIT forceunit, const int* block, const in
     }
     else
     {
+        grpidx.first = *std::min_element(block, block + blocknr);
+        grpidx.second = *std::max_element(block, block + blocknr) + 1;
+
         const char* identifier = (forceunit == FORCE_UNIT::Residue) ? "resi." : "mol";
         
         std::set<int> uniqres;
@@ -201,8 +226,10 @@ void ForceParaSet::setGroup()
 {
     if (index_fn.empty())
     {
-        grp1idx = std::make_pair<int32_t, int32_t>(0, atomn);
-        grp2idx = std::make_pair<int32_t, int32_t>(0, atomn);
+        grp1idx = std::make_pair<atomindex, atomindex>(0, atomn);
+        grp2idx = std::make_pair<atomindex, atomindex>(0, atomn);
+        grp1aid = std::make_pair<atomindex, atomindex>(0, atomn);
+        grp2aid = std::make_pair<atomindex, atomindex>(0, atomn);
     }
     else
     {
@@ -212,9 +239,9 @@ void ForceParaSet::setGroup()
         {
             int blocks = grps->index[gi];
             if (grpnms[gi] == grp1nm)
-                handle_index(forceunit, &grps->a[blocks], grps->index[gi + 1] - blocks, resmap, grp1idx, exclgrp1);
+                handle_index(forceunit, &grps->a[blocks], grps->index[gi + 1] - blocks, resmap, grp1idx, grp1aid, exclgrp1);
             if (grpnms[gi] == grp2nm)
-                handle_index(forceunit, &grps->a[blocks], grps->index[gi + 1] - blocks, resmap, grp2idx, exclgrp2);
+                handle_index(forceunit, &grps->a[blocks], grps->index[gi + 1] - blocks, resmap, grp2idx, grp2aid, exclgrp2);
         }
     }
 

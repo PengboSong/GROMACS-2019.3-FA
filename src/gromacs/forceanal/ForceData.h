@@ -72,15 +72,13 @@ class ForceData
 public:
     ForceData();
 
-    ForceData(real squared_threshold, real average_factor);
+    ForceData(real squared_threshold);
 
     void write_forces_txt(std::ofstream& txtstream);
 
     void write_forces_bin(std::ofstream& binstream, uint32_t& forces_count, const uint64_t& saddr, uint64_t& eaddr);
 
     real lowlim;
-
-    real avgfactor;
 };
 
 class SummedData : public SummedMode, public ForceData
@@ -88,9 +86,11 @@ class SummedData : public SummedMode, public ForceData
 public:
     SummedData();
 
-    SummedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold, uint64_t Naverage);
+    SummedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold);
 
-    void average_forces();
+    void export_forces(SummedData& other);
+
+    void scale_forces(real scaling_factor);
 
     void write_forces_txt(std::ofstream& txtstream);
 
@@ -102,9 +102,9 @@ class DetailedData : public DetailedMode, public ForceData
 public:
     DetailedData();
 
-    DetailedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold, uint64_t Naverage);
+    DetailedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold);
 
-    void average_forces();
+    void scale_forces(real scaling_factor);
 
     void write_forces_txt(std::ofstream& txtstream);
 

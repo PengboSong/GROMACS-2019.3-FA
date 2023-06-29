@@ -20,19 +20,21 @@ ForceAnalysis::ForceAnalysis()
 {
 }
 
-ForceAnalysis::ForceAnalysis(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop)
- : ForceAnal::ForceParaSet(nfile, fnm, mtop),
+ForceAnalysis::ForceAnalysis(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop, const t_inputrec *inputrec)
+ : ForceAnal::ForceParaSet(nfile, fnm, mtop, inputrec),
    frame_count(0)
 {
     init_outfiles();
 
+    force_deviation.resizeWithPadding(atomn);
+
     switch (datamode)
     {
         case ForceAnal::DATA_MODE::SummedMode:
-            summed_forces = ForceAnal::SummedData(grp1idx, grp2idx, threshold, Naverage);
+            summed_forces = ForceAnal::SummedData(grp1idx, grp2idx, threshold);
             break;
         case ForceAnal::DATA_MODE::DetailedMode:
-            detailed_forces = ForceAnal::DetailedData(grp1idx, grp2idx, threshold, Naverage);
+            detailed_forces = ForceAnal::DetailedData(grp1idx, grp2idx, threshold);
             break;
         case ForceAnal::DATA_MODE::ListMode:
             listed_forces = ForceAnal::ListData(threshold);
@@ -87,29 +89,52 @@ void ForceAnalysis::init_outfiles()
             totfile.close();
         }
     }
+    if (!atomf_nb_bin_fn.empty())
+    {
+        std::ofstream nbatomfile(atomf_nb_bin_fn, std::ios::out | std::ios::trunc);
+        if (nbatomfile.is_open())
+        {
+            uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
+            nbatomfile.write((char*)&filecode, sizeof(uint8_t));
+            nbatomfile.close();
+        }
+    }
+    if (!atomf_nb_b_bin_fn.empty())
+    {
+        std::ofstream nbbatomfile(atomf_nb_bin_fn, std::ios::out | std::ios::trunc);
+        if (nbbatomfile.is_open())
+        {
+            uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
+            nbbatomfile.write((char*)&filecode, sizeof(uint8_t));
+            nbbatomfile.close();
+        }
+    }
+    if (!fdev_bin_fn.empty())
+    {
+        std::ofstream devfile(fdev_bin_fn, std::ios::out | std::ios::trunc);
+        if (devfile.is_open())
+        {
+            uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
+            devfile.write((char*)&filecode, sizeof(uint8_t));
+            // Instead of writing group index range data, using standalone atom map
+            /*
+            devfile.write((char*)&grp1idx.first, sizeof(ForceAnal::atomindex));
+            devfile.write((char*)&grp1idx.second, sizeof(ForceAnal::atomindex));
+            */
+            devfile.close();
+        }
+    }
 
-#ifdef FORCEANAL_DEBUG
-    if (!totf_bin_fn.empty())
-    {
-        std::ofstream nb_totfile("internal_nb_forces.far", std::ios::out | std::ios::trunc);
-        if (nb_totfile.is_open())
-        {
-            uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
-            nb_totfile.write((char*)&filecode, sizeof(uint8_t));
-            nb_totfile.close();
-        }
-    }
-    if (!totf_bin_fn.empty())
-    {
-        std::ofstream nb_b_totfile("internal_nb+b_forces.far", std::ios::out | std::ios::trunc);
-        if (nb_b_totfile.is_open())
-        {
-            uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
-            nb_b_totfile.write((char*)&filecode, sizeof(uint8_t));
-            nb_b_totfile.close();
-        }
-    }
-#endif
+}
+
+bool ForceAnalysis::atom_in_grp1(const int idx)
+{
+    return (idx >= grp1aid.first) && (idx < grp1aid.second);
+}
+
+bool ForceAnalysis::atom_in_grp2(const int idx)
+{
+    return (idx >= grp2aid.first) && (idx < grp2aid.second);
 }
 
 bool ForceAnalysis::in_grp1(const int idx)
@@ -146,19 +171,31 @@ bool ForceAnalysis::in_grp2(const int idx)
     }
 }
 
-bool ForceAnalysis::in_grp(int& i, int& j)
+bool ForceAnalysis::in_grp(const int i, const int j)
 {
     return in_grp1(i) && in_grp2(j);
+}
+
+void ForceAnalysis::mapping_index(int &i, int &j)
+{
+    switch (forceunit)
+    {
+        case ForceAnal::FORCE_UNIT::Atom:
+            break;
+        case ForceAnal::FORCE_UNIT::Residue:
+            i = resmap[i];
+            j = resmap[j];
+            break;
+        case ForceAnal::FORCE_UNIT::Molecule:
+            i = molmap[i];
+            j = molmap[j];
+            break;
+    }
 }
 
 void ForceAnalysis::add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij)
 {
     if (datamode == ForceAnal::DATA_MODE::None) return;
-    if (i > j)
-    {
-        std::swap<int>(i, j);
-        rvec_opp(f_ij);
-    }
     switch (forceunit)
     {
         case ForceAnal::FORCE_UNIT::Atom:
@@ -221,18 +258,18 @@ void ForceAnalysis::add_nonbonded(int i, int j, real pf_coul, real pf_vdw, real 
 void ForceAnalysis::add_nonbonded_coulomb(int i, int j, real pf_coul, real dx, real dy, real dz)
 {
     rvec coul_force;
-    coul_force[0] = dx * pf_coul;
-    coul_force[1] = dy * pf_coul;
-    coul_force[2] = dz * pf_coul;
+    coul_force[XX] = dx * pf_coul;
+    coul_force[YY] = dy * pf_coul;
+    coul_force[ZZ] = dz * pf_coul;
     add_pairforce(i, j, ForceAnal::Interact_COULOMB, coul_force);
 }
 
 void ForceAnalysis::add_nonbonded_vdw(int i, int j, real pf_vdw, real dx, real dy, real dz)
 {
     rvec lj_force;
-    lj_force[0] = dx * pf_vdw;
-    lj_force[1] = dy * pf_vdw;
-    lj_force[2] = dz * pf_vdw;
+    lj_force[XX] = dx * pf_vdw;
+    lj_force[YY] = dy * pf_vdw;
+    lj_force[ZZ] = dz * pf_vdw;
     add_pairforce(i, j, ForceAnal::Interact_VDW, lj_force);
 }
 
@@ -286,23 +323,32 @@ int ForceAnalysis::trires(rvec f_i, rvec r_ij, rvec r_ik, rvec r_il, rvec f_ij, 
     return 0;
 }
 
-void ForceAnalysis::add_angle(int ai, int aj, int ak, rvec f_i, rvec gmx_unused f_j, rvec f_k, rvec r_ij, rvec r_kj, rvec r_ik)
+void ForceAnalysis::add_angle(int ai, int aj, int ak, rvec f_i, rvec f_j, rvec f_k, rvec r_ij, rvec r_kj, rvec r_ik)
 {
     /*
     Fi, Fj and Fk are dependent, Fi + Fj + Fk = 0.
     Therefore, not all 3 of Fi, Fj and Fk are required.
     In this case, only Fi and Fk are required to recover pairwise forces.
     */
-    rvec r_ki, f_ij, f_ik, f_ki, f_kj;
+
+    // Clear force component perpendicular to the plane formed by position vector r_ij and r_ik
+    real rvnorm2;
+    rvec r_ki, f_ij, f_ik, f_ji, f_jk, f_ki, f_kj;
+    rvec rv, proj_f_i, proj_f_k, f_i_err, f_j_err, f_k_err;
+    cprod(r_ij, r_ik, rv);
+    rvnorm2 = norm2(rv);
+    svmul(iprod(f_i, rv) / rvnorm2, rv, proj_f_i);
+    svmul(iprod(f_k, rv) / rvnorm2, rv, proj_f_k);
+
     rvec_opp(r_ik, r_ki);
-    if (dbres(f_i, r_ij, r_ik, f_ij, f_ik) != 0)
+    if (dbres(proj_f_i, r_ij, r_ik, f_ij, f_ik) != 0)
     {
         clear_rvec(f_ij);
         clear_rvec(f_ik);
         gmx_warning("Failed to resolve force at atom %d on angle potential\n"
                     "(%d, %d, %d).", ai, ai, aj, ak);
     }
-    if (dbres(f_k, r_ki, r_kj, f_ki, f_kj) != 0)
+    if (dbres(proj_f_k, r_ki, r_kj, f_ki, f_kj) != 0)
     {
         clear_rvec(f_ki);
         clear_rvec(f_kj);
@@ -356,9 +402,22 @@ void ForceAnalysis::add_angle(int ai, int aj, int ak, rvec f_i, rvec gmx_unused 
     add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
     add_pairforce(ai, ak, ForceAnal::Interact_ANGLE, f_ik);
     add_pairforce(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
+
+    // Save force decomposition deviations to storage
+    rvec_opp(f_ij, f_ji);
+    rvec_opp(f_kj, f_jk);
+    rvec_sub(f_i, f_ij, f_i_err);
+    rvec_dec(f_i_err, f_ik);
+    rvec_sub(f_j, f_ji, f_j_err);
+    rvec_dec(f_j_err, f_jk);
+    rvec_sub(f_k, f_ki, f_k_err);
+    rvec_dec(f_k_err, f_kj);
+    force_deviation[ai] += f_i_err;
+    force_deviation[aj] += f_j_err;
+    force_deviation[ak] += f_k_err;
 }
 
-void ForceAnalysis::add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec f_j, rvec f_k, rvec gmx_unused f_l, rvec r_ij, rvec r_kj, rvec r_kl)
+void ForceAnalysis::add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec f_j, rvec f_k, rvec f_l, rvec r_ij, rvec r_kj, rvec r_kl)
 {
     /*
     Fi, Fj, Fk and Fl are dependent, Fi + Fj + Fk + Fl = 0.
@@ -370,7 +429,8 @@ void ForceAnalysis::add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec 
     rvec_opp(f_k);
 
     rvec r_ji, r_jk, r_ki, r_ik, r_il, r_jl;
-    rvec f_ij, f_ik, f_il, f_ji, f_jk, f_jl, f_ki, f_kj, f_kl;
+    rvec f_ij, f_ik, f_il, f_ji, f_jk, f_jl, f_ki, f_kj, f_kl, f_li, f_lj, f_lk;
+    rvec f_i_err, f_j_err, f_k_err, f_l_err;
     rvec_opp(r_ij, r_ji);
     rvec_opp(r_kj, r_jk);
     rvec_sub(r_ij, r_kj, r_ik);
@@ -482,6 +542,27 @@ void ForceAnalysis::add_dihedral(int ai, int aj, int ak, int al, rvec f_i, rvec 
     add_pairforce(aj, al, ForceAnal::Interact_DIHEDRAL, f_jl);
     add_pairforce(ak, ai, ForceAnal::Interact_DIHEDRAL, f_ki);
     add_pairforce(ak, al, ForceAnal::Interact_DIHEDRAL, f_kl);
+
+    // Save force decomposition deviations to storage
+    rvec_opp(f_il, f_li);
+    rvec_opp(f_jl, f_lj);
+    rvec_opp(f_kl, f_lk);
+    rvec_sub(f_i, f_ij, f_i_err);
+    rvec_dec(f_i_err, f_ik);
+    rvec_dec(f_i_err, f_il);
+    rvec_sub(f_j, f_ji, f_j_err);
+    rvec_dec(f_j_err, f_jk);
+    rvec_dec(f_j_err, f_jl);
+    rvec_sub(f_k, f_ki, f_k_err);
+    rvec_dec(f_k_err, f_kj);
+    rvec_dec(f_k_err, f_kl);
+    rvec_sub(f_l, f_li, f_l_err);
+    rvec_dec(f_l_err, f_lj);
+    rvec_dec(f_l_err, f_lk);
+    force_deviation[ai] += f_i_err;
+    force_deviation[aj] += f_j_err;
+    force_deviation[ak] += f_k_err;
+    force_deviation[al] += f_l_err;
 }
 
 void ForceAnalysis::write_frame(bool write_last_frame)
@@ -504,19 +585,6 @@ void ForceAnalysis::write_frame(bool write_last_frame)
 
 void ForceAnalysis::write_forces()
 {
-    switch (datamode)
-    {
-        case ForceAnal::DATA_MODE::SummedMode:
-            summed_forces.average_forces();
-            break;
-        case ForceAnal::DATA_MODE::DetailedMode:
-            detailed_forces.average_forces();
-            break;
-        default:
-            // Do Nothing
-            break;
-    }
-
     if (!res_bin_fn.empty())
     {
         std::ofstream binstream(res_bin_fn, std::ios::binary | std::ios::ate | std::ios::in);
@@ -678,10 +746,25 @@ void ForceAnalysis::write_atom_forces(const char* fnm, const rvec* f)
     }
 }
 
-void ForceAnalysis::write_tot_forces(const rvec* f)
+void ForceAnalysis::write_atom_forces(ForceAnal::OUT_FORCE_TYPE out_ftype, rvec *f)
 {
-    if (!totf_bin_fn.empty())
+    if (out_ftype == ForceAnal::OUT_FORCE_TYPE::AtomForceTotal && !totf_bin_fn.empty())
         write_atom_forces(totf_bin_fn.c_str(), f);
+    else if (out_ftype == ForceAnal::OUT_FORCE_TYPE::AtomForceNonbonded && !atomf_nb_bin_fn.empty())
+        write_atom_forces(atomf_nb_bin_fn.c_str(), f);
+    else if (out_ftype == ForceAnal::OUT_FORCE_TYPE::AtomForceNonbondedBonded && !atomf_nb_b_bin_fn.empty())
+        write_atom_forces(atomf_nb_b_bin_fn.c_str(), f);
+}
+
+void ForceAnalysis::write_dev_forces(bool clearvec)
+{
+    if (!fdev_bin_fn.empty())
+        write_atom_forces(fdev_bin_fn.c_str(), as_rvec_array(force_deviation.data()));
+    if (clearvec)
+    {
+        force_deviation.clear();
+        force_deviation.resizeWithPadding(atomn);
+    }
 }
 
 void FA_add_nonbonded(class ForceAnalysis *FA, int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz)

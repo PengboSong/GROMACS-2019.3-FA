@@ -9,6 +9,8 @@
 #define SRC_GROMACS_FORCEANAL_FORCEPARASET_H_
 
 #include "gromacs/commandline/filenm.h"
+#include "gromacs/mdtypes/inputrec.h"
+#include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/topology/topology.h"
 
 #include "ForceAnalDef.h"
@@ -19,7 +21,7 @@ class ForceParaSet
 {
 public:
     ForceParaSet();
-    ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_global);
+    ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_global, const t_inputrec *inputrec);
     ~ForceParaSet();
 
     void setParas(int nfile, const t_filenm fnm[]);
@@ -32,7 +34,7 @@ public:
 
     static std::string handle_empty_string(const char *str);
 
-    static void handle_index(FORCE_UNIT forceunit, const int* block, const int blocknr, const std::vector<atomindex>& resmap, GrpIdx& grpidx, std::vector<atomindex>& excl);
+    static void handle_index(FORCE_UNIT forceunit, const int* block, const int blocknr, const std::vector<atomindex>& resmap, GrpIdx& grpidx, GrpIdx& grpaid, std::vector<atomindex>& excl);
 
 protected:
     // Output ForceAnal parameter filename (*.par)
@@ -44,8 +46,12 @@ protected:
     // Output ForceAnal text format force data filename (-ft *.fxt)
     std::string res_txt_fn;
 
-    // Output ForceAnal binary format atom force data filename (-fa *.fat)
+    // Output ForceAnal binary format atom force (total, nonbonded, nonbonded + bonded) data filename (-fa *.fat)
     std::string totf_bin_fn;
+    std::string atomf_nb_bin_fn, atomf_nb_b_bin_fn;
+
+    // Output ForceAnal binary format force deviation data filename (-fd *.fat)
+    std::string fdev_bin_fn;
 
     // Input index file (Can not read from gmx_groups_t)
     std::string index_fn;
@@ -100,8 +106,18 @@ protected:
     // For atom in group 1, its ID should be in range grp1_start <= aid < grp1_end
     GrpIdx grp1idx, grp2idx;
 
+    // Packed group ** ATOM ** index for group1 & group2
+    // Used for pairwise force decomposition of ewald summation
+    GrpIdx grp1aid, grp2aid;
+
     // Index excluded from group1 & group2
     std::vector<atomindex> exclgrp1, exclgrp2;
+
+    // Type of electrostatics
+    int eeltype;
+
+    // Type of Van der waals
+    int vdwtype;
 };
 
 }

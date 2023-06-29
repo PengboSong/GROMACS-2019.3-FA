@@ -70,12 +70,12 @@ void ListMode::clear()
 }
 
 ForceData::ForceData()
- : lowlim(NONZERO_LIMIT), avgfactor(1.0)
+ : lowlim(NONZERO_LIMIT)
 {
 }
 
-ForceData::ForceData(real squared_threshold, real average_factor)
- : lowlim(squared_threshold), avgfactor(average_factor)
+ForceData::ForceData(real squared_threshold)
+ : lowlim(squared_threshold)
 {
 }
 
@@ -83,15 +83,35 @@ SummedData::SummedData()
 {
 }
 
-SummedData::SummedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold, uint64_t Naverage)
- : SummedMode(grp1idx, grp2idx), ForceData(squared_threshold, 1.0 / Naverage)
+SummedData::SummedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold)
+ : SummedMode(grp1idx, grp2idx), ForceData(squared_threshold)
 {
 }
 
-void SummedData::average_forces()
+void SummedData::export_forces(SummedData &other)
+{
+    InteractionType *itypes;
+    real *fs;
+    for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
+    {
+        itypes = forces[i].itypes_data();
+        fs = forces[i].forces_data();
+        for (uint64_t j = 0; j < forces[i].size(); ++j)
+        {
+            fs = forces[i].forces_data();
+            rvec f_ij;
+            f_ij[XX] = fs[4 * j + XX];
+            f_ij[YY] = fs[4 * j + YY];
+            f_ij[ZZ] = fs[4 * j + ZZ];
+            other.add_detailed_force(i, j + forces[i].id_begin(), itypes[j], f_ij);
+        }
+    }
+}
+
+void SummedData::scale_forces(real scaling_factor)
 {
     for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
-        forces[i] *= avgfactor;
+        forces[i] *= scaling_factor;
 }
 
 void SummedData::write_forces_txt(std::ofstream& txtstream)
@@ -100,18 +120,16 @@ void SummedData::write_forces_txt(std::ofstream& txtstream)
 
     int ai, aj;
     int64_t idx;
-    InteractionType itype;
-    real fx, fy, fz, f;
-    InteractionType* itypes;
-    real* fs;
+    InteractionType itype, *itypes;
+    real fx, fy, fz, f, *fs;
     for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
     {
         ai = static_cast<int>(i);
+        itypes = forces[i].itypes_data();
+        fs = forces[i].forces_data();
         for (uint64_t j = 0; j < forces[i].size(); ++j)
         {
             aj = j + forces[i].id_begin();
-            itypes = forces[i].itypes_data();
-            fs = forces[i].forces_data();
             idx = 4 * j;
             itype = itypes[j];
             fx = fs[idx + XX];
@@ -134,18 +152,16 @@ void SummedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_cou
 
     int32_t ai, aj;
     int64_t idx;
-    InteractionType itype;
-    real fx, fy, fz, f;
-    InteractionType* itypes;
-    real* fs;
+    InteractionType itype, *itypes;
+    real fx, fy, fz, f, *fs;
     for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
     {
         ai = static_cast<int>(i);
+        itypes = forces[i].itypes_data();
+        fs = forces[i].forces_data();
         for (uint64_t j = 0; j < forces[i].size(); ++j)
         {
             aj = j + forces[i].id_begin();
-            itypes = forces[i].itypes_data();
-            fs = forces[i].forces_data();
             idx = 4 * j;
             itype = itypes[j];
             fx = fs[idx + XX];
@@ -173,16 +189,16 @@ DetailedData::DetailedData()
 {
 }
 
-DetailedData::DetailedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold, uint64_t Naverage)
- : DetailedMode(grp1idx, grp2idx), ForceData(squared_threshold, 1.0 / Naverage)
+DetailedData::DetailedData(const GrpIdx& grp1idx, const GrpIdx& grp2idx, real squared_threshold)
+ : DetailedMode(grp1idx, grp2idx), ForceData(squared_threshold)
 {
 }
 
-void DetailedData::average_forces()
+void DetailedData::scale_forces(real scaling_factor)
 {
     for (uint64_t i = forces.id_begin(); i < forces.id_end(); ++i)
         for (uint64_t j = forces[i].id_begin(); j < forces[i].id_end(); ++j)
-            forces[i][j] *= avgfactor;
+            forces[i][j] *= scaling_factor;
 }
 
 void DetailedData::write_forces_txt(std::ofstream& txtstream)
@@ -230,10 +246,9 @@ void DetailedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_c
             if (forces[i][j].sum() > lowlim)
             {
                 ++forces_count;
-                force_aij = forces[i][j].data();
                 binstream.write((char*)&ai, sizeof(int32_t));
                 binstream.write((char*)&aj, sizeof(int32_t));
-                binstream.write((char*)&force_aij, Interact_FORCEVEC_LEN * sizeof(real));
+                binstream.write((char*)forces[i][j].data(), Interact_FORCEVEC_LEN * sizeof(real));
             }
         }
     }
@@ -245,7 +260,7 @@ ListData::ListData()
 }
 
 ListData::ListData(real squared_threshold)
- : ListMode(), ForceData(squared_threshold, 1.0)
+ : ListMode(), ForceData(squared_threshold)
 {
 }
 

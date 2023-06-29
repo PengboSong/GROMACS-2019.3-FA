@@ -147,14 +147,15 @@ real do_ewald(const t_inputrec *ir,
               real              ewaldcoeff,
               real              lambda,
               real             *dvdlambda,
-              gmx_ewald_tab_t  *et)
+              gmx_ewald_tab_t  *et,
+              ForceAnalysis    *FA)
 {
     real        factor     = -1.0/(4*ewaldcoeff*ewaldcoeff);
     const real *charge;
     real        energy_AB[2], energy;
-    rvec        lll;
-    int         lowiy, lowiz, ix, iy, iz, n, q;
-    real        tmp, cs, ss, ak, akv, mx, my, mz, m2, scale;
+    rvec        lll, pf_ewald;
+    int         lowiy, lowiz, ix, iy, iz, n, nn, q;
+    real        tmp, cs, ss, ak, akv, mx, my, mz, m2, scale, fscale;
     gmx_bool    bFreeEnergy;
 
     if (cr != nullptr)
@@ -281,6 +282,18 @@ real do_ewald(const t_inputrec *ir,
                         f[n][XX] += tmp*mx*2*scaleRecip;
                         f[n][YY] += tmp*my*2*scaleRecip;
                         f[n][ZZ] += tmp*mz*2*scaleRecip;
+
+                        if (FA)
+                        {
+                            if (!FA->atom_in_grp1(n)) continue;
+                            fscale = 2 * scaleRecip * scale * ak;
+                            for (nn = 0; nn < natoms; ++nn)
+                            {
+                                if (n >= nn || !FA->atom_in_grp2(nn)) continue;
+                                tmp = fscale * (et->tab_qxyz[n].im * et->tab_qxyz[nn].re - et->tab_qxyz[n].re * et->tab_qxyz[nn].im);
+                                FA->add_nonbonded_coulomb(n ,nn, tmp, mx, my, mz);
+                            }
+                        }
 #if 0
                         f[n][XX] += tmp*mx;
                         f[n][YY] += tmp*my;

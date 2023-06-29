@@ -67,6 +67,7 @@
 
 #include <stdio.h>
 
+#include "gromacs/forceanal/ForceAnalysis.h"
 #include "gromacs/math/vectypes.h"
 #include "gromacs/utility/real.h"
 
@@ -96,7 +97,8 @@ do_ewald(const t_inputrec *ir,
          real              ewaldcoeff,
          real              lambda,
          real             *dvdlambda,
-         gmx_ewald_tab_t  *et);
+         gmx_ewald_tab_t  *et,
+         ForceAnalysis    *FA);
 
 /*! \brief Calculate the correction to the Ewald sum, due to a net system
  * charge.

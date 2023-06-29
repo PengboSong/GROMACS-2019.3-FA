@@ -590,7 +590,10 @@ void gmx::Integrator::do_rerun()
                      ddOpenBalanceRegion, ddCloseBalanceRegion);
         }
 
-        fr->FA->write_tot_forces(as_rvec_array(f.data()));
+        // Force Analysis operations
+        fr->FA->write_atom_forces(ForceAnal::OUT_FORCE_TYPE::AtomForceTotal, as_rvec_array(f.data()));
+
+        fr->FA->write_dev_forces(true);
 
         fr->FA->write_frame();
 

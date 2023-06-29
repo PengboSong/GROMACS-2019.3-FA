@@ -132,6 +132,7 @@ class LegacyMdrunOptions
           { efFOR, "-fo",       "fa",        ffOPTWR },
           { efFXT, "-ft",       "fa",        ffOPTWR },
           { efFAR, "-fa",       "fa",        ffOPTWR },
+          { efFAR, "-fd",       "fa",        ffOPTWR },
           { efPAR, "-fp",       "fa",        ffOPTRD },
           { efNDX, "-fn",       "index",     ffOPTRD },
           { efFMP, "-fmp",      "map",       ffOPTWR }}};

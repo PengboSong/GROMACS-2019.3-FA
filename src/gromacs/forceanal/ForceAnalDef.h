@@ -64,18 +64,27 @@ namespace ForceAnal
 
     enum class DATA_MODE : uint8_t
     {
-        None = 0U,
-        SummedMode = 1U,
-        DetailedMode = 2U,
-        ListMode = 3U,
+        None          = 0U,
+        SummedMode    = 1U,
+        DetailedMode  = 2U,
+        ListMode      = 3U,
         AtomForceMode = 4U,
     };
 
     enum class FORCE_UNIT : uint8_t
     {
-        Atom = 1U,
-        Residue = 2U,
+        None     = 0U,
+        Atom     = 1U,
+        Residue  = 2U,
         Molecule = 3U,
+    };
+
+    enum class OUT_FORCE_TYPE : uint8_t
+    {
+        None                     = 0U,
+        AtomForceTotal           = 1U,
+        AtomForceNonbonded       = 2U,
+        AtomForceNonbondedBonded = 3U,
     };
 
     static inline real real_norm2(const real fx, const real fy, const real fz)

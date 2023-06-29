@@ -140,7 +140,7 @@ real morse_bonds(int nbonds,
     const real two = 2.0;
     real       dr, dr2, temp, omtemp, cbomtemp, fbond, vbond, fij, vtot;
     real       b0, be, cb, b0A, beA, cbA, b0B, beB, cbB, L1;
-    rvec       dx, pf_forcevector;
+    rvec       dx, pfvec;
     int        i, m, ki, type, ai, aj;
     ivec       dt;
 
@@ -197,12 +197,12 @@ real morse_bonds(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pfvec);
         }
     }                                         /*  83 TOTAL    */
     return vtot;
@@ -222,7 +222,7 @@ real cubic_bonds(int nbonds,
     const real two   = 2.0;
     real       kb, b0, kcub;
     real       dr, dr2, dist, kdist, kdist2, fbond, vbond, fij, vtot;
-    rvec       dx, pf_forcevector;
+    rvec       dx, pfvec;
     int        i, m, ki, type, ai, aj;
     ivec       dt;
 
@@ -267,12 +267,12 @@ real cubic_bonds(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pfvec);
         }
     }                                         /*  54 TOTAL    */
     return vtot;
@@ -291,7 +291,7 @@ real FENE_bonds(int nbonds,
     const real one  = 1.0;
     real       bm, kb;
     real       dr2, bm2, omdr2obm2, fbond, vbond, fij, vtot;
-    rvec       dx, pf_forcevector;
+    rvec       dx, pfvec;
     int        i, m, ki, type, ai, aj;
     ivec       dt;
 
@@ -343,12 +343,12 @@ real FENE_bonds(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pfvec);
         }
     }                                         /*  58 TOTAL    */
     return vtot;
@@ -392,7 +392,7 @@ real bonds(int nbonds,
 {
     int  i, m, ki, ai, aj, type;
     real dr, dr2, fbond, vbond, fij, vtot;
-    rvec dx, pf_forcevector;
+    rvec dx, pfvec;
     ivec dt;
 
     vtot = 0.0;
@@ -432,12 +432,12 @@ real bonds(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pfvec);
         }
     }               /* 59 TOTAL	*/
     return vtot;
@@ -457,7 +457,7 @@ real restraint_bonds(int nbonds,
     real L1;
     real low, dlow, up1, dup1, up2, dup2, k, dk;
     real drh, drh2;
-    rvec dx, pf_forcevector;
+    rvec dx, pfvec;
     ivec dt;
 
     L1   = 1.0 - lambda;
@@ -533,12 +533,12 @@ real restraint_bonds(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pfvec);
         }
     }                   /* 59 TOTAL	*/
 
@@ -556,7 +556,7 @@ real polarize(int nbonds,
 {
     int  i, m, ki, ai, aj, type;
     real dr, dr2, fbond, vbond, fij, vtot, ksh;
-    rvec dx, pf_forcevector;
+    rvec dx, pfvec;
     ivec dt;
 
     vtot = 0.0;
@@ -593,12 +593,12 @@ real polarize(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pfvec);
         }
     }               /* 59 TOTAL	*/
     return vtot;
@@ -615,7 +615,7 @@ real anharm_polarize(int nbonds,
 {
     int  i, m, ki, ai, aj, type;
     real dr, dr2, fbond, vbond, fij, vtot, ksh, khyp, drcut, ddr, ddr3;
-    rvec dx, pf_forcevector;
+    rvec dx, pfvec;
     ivec dt;
 
     vtot = 0.0;
@@ -661,12 +661,12 @@ real anharm_polarize(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
 
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pfvec);
         }
     }               /* 72 TOTAL	*/
     return vtot;
@@ -687,7 +687,7 @@ real water_pol(int nbonds,
      */
     int  i, m, aO, aH1, aH2, aD, aS, type, type0, ki;
     ivec dt;
-    rvec dOH1, dOH2, dHH, dOD, dDS, nW, kk, dx, kdx, proj, pf_forcevector;
+    rvec dOH1, dOH2, dHH, dOD, dDS, nW, kk, dx, kdx, proj, pfvec;
     real vtot, fij, r_HH, r_OD, r_nW, tx, ty, tz, qS;
 
     vtot = 0.0;
@@ -775,12 +775,12 @@ real water_pol(int nbonds,
                 f[aD][m]           -= fij;
                 fshift[ki][m]      += fij;
                 fshift[CENTRAL][m] -= fij;
-                pf_forcevector[m]   = fij;
+                pfvec[m]            = fij;
             }
 
             if (FA)
             {
-                FA->add_pairforce(aS, aD, ForceAnal::Interact_POLAR, pf_forcevector);
+                FA->add_pairforce(aS, aD, ForceAnal::Interact_POLAR, pfvec);
             }
         }
     }
@@ -792,7 +792,7 @@ static real do_1_thole(const rvec xi, const rvec xj, rvec fi, rvec fj,
                        rvec fshift[], real afac,
                        int ai, int aj, ForceAnalysis *FA)
 {
-    rvec r12, pf_forcevector;
+    rvec r12, pfvec;
     real r12sq, r12_1, r12bar, v0, v1, fscal, ebar, fff;
     int  m, t;
 
@@ -813,12 +813,12 @@ static real do_1_thole(const rvec xi, const rvec xj, rvec fi, rvec fj,
         fj[m]              -= fff;
         fshift[t][m]       += fff;
         fshift[CENTRAL][m] -= fff;
-        pf_forcevector[m]   = fff;
+        pfvec[m]            = fff;
     }             /* 15 */
 
     if (FA)
     {
-        FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pf_forcevector);
+        FA->add_pairforce(ai, aj, ForceAnal::Interact_POLAR, pfvec);
     }
 
     return v0*v1; /* 1 */
@@ -889,7 +889,7 @@ real angles(int nbonds,
             ForceAnalysis *FA)
 {
     int  i, ai, aj, ak, t1, t2, type;
-    rvec r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik, f_ij, f_kj;
     real cos_theta, cos_theta2, theta, dVdt, va, vtot;
     ivec jt, dt_ij, dt_kj;
 
@@ -936,6 +936,8 @@ real angles(int nbonds,
 
             for (m = 0; m < DIM; m++)
             {           /*  39		*/
+                f_ij[m]   = (cii - cik) * r_ij[m];
+                f_kj[m]   = (ckk - cik) * r_kj[m];
                 f_i[m]    = -(cik*r_kj[m] - cii*r_ij[m]);
                 f_k[m]    = -(cik*r_ij[m] - ckk*r_kj[m]);
                 f_j[m]    = -f_i[m] - f_k[m];
@@ -946,7 +948,8 @@ real angles(int nbonds,
 
             if (FA)
             {
-                FA->add_angle(ai, aj, ak, f_i, f_j, f_k, r_ij, r_kj, r_ik);
+                FA->add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+                FA->add_pairforce(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
             }
 
             if (g != nullptr)
@@ -1123,9 +1126,9 @@ real linear_angles(int nbonds,
 {
     int  i, m, ai, aj, ak, t1, t2, type;
     rvec f_i, f_j, f_k;
-    real L1, kA, kB, aA, aB, dr, dr2, va, vtot, a, b, klin;
+    real L1, kA, kB, aA, aB, dr, dr2, va, vtot, a, b, klin, fcoeff;
     ivec jt, dt_ij, dt_kj;
-    rvec r_ij, r_kj, r_ik, dx;
+    rvec r_ij, r_kj, r_ik, f_ij, f_kj, dx;
 
     L1   = 1-lambda;
     vtot = 0.0;
@@ -1145,6 +1148,8 @@ real linear_angles(int nbonds,
         a    = L1*aA+lambda*aB;
         b    = 1-a;
 
+        fcoeff = -klin * (a + b);
+
         t1 = pbc_rvec_sub(pbc, x[ai], x[aj], r_ij);
         t2 = pbc_rvec_sub(pbc, x[ak], x[aj], r_kj);
         rvec_sub(r_ij, r_kj, r_ik);
@@ -1155,6 +1160,8 @@ real linear_angles(int nbonds,
             dr        = -a * r_ij[m] - b * r_kj[m];
             dr2      += dr*dr;
             dx[m]     = dr;
+            f_ij[m]   = a * fcoeff * r_ij[m];
+            f_kj[m]   = b * fcoeff * r_kj[m];
             f_i[m]    = a*klin*dr;
             f_k[m]    = b*klin*dr;
             f_j[m]    = -(f_i[m]+f_k[m]);
@@ -1165,7 +1172,8 @@ real linear_angles(int nbonds,
 
         if (FA)
         {
-            FA->add_angle(ai, aj, ak, f_i, f_j, f_k, r_ij, r_kj, r_ik);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+            FA->add_pairforce(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
         }
 
         va          = 0.5*klin*dr2;
@@ -1199,7 +1207,7 @@ real urey_bradley(int nbonds,
                   ForceAnalysis *FA)
 {
     int  i, m, ai, aj, ak, t1, t2, type, ki;
-    rvec r_ij, r_kj, r_ik, pf_forcevector;
+    rvec r_ij, r_kj, r_ik, f_ij, f_kj, f_ik;
     real cos_theta, cos_theta2, theta;
     real dVdt, va, vtot, dr, dr2, vbond, fbond, fik;
     real kthA, th0A, kUBA, r13A, kthB, th0B, kUBB, r13B;
@@ -1227,7 +1235,7 @@ real urey_bradley(int nbonds,
         *dvdlambda += harmonic(kthA, kthB, th0A, th0B, theta, lambda, &va, &dVdt); /*  21  */
         vtot       += va;
 
-        rvec_sub(r_ij, r_kj, r_ik);
+        ki  = pbc_rvec_sub(pbc, x[ai], x[ak], r_ik);
         dr2  = iprod(r_ik, r_ik);                                                   /*   5		*/
         dr   = dr2*gmx::invsqrt(dr2);                                               /*  10		*/
 
@@ -1252,6 +1260,8 @@ real urey_bradley(int nbonds,
 
             for (m = 0; (m < DIM); m++)         /*  39		*/
             {
+                f_ij[m]   = (cii - cik) * r_ij[m];
+                f_kj[m]   = (ckk - cik) * r_kj[m];
                 f_i[m]    = -(cik*r_kj[m]-cii*r_ij[m]);
                 f_k[m]    = -(cik*r_ij[m]-ckk*r_kj[m]);
                 f_j[m]    = -f_i[m]-f_k[m];
@@ -1262,7 +1272,8 @@ real urey_bradley(int nbonds,
 
             if (FA)
             {
-                FA->add_angle(ai, aj, ak, f_i, f_j, f_k, r_ij, r_kj, r_ik);
+                FA->add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+                FA->add_pairforce(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
             }
 
             if (g)
@@ -1299,11 +1310,11 @@ real urey_bradley(int nbonds,
             f[ak][m]           -= fik;
             fshift[ki][m]      += fik;
             fshift[CENTRAL][m] -= fik;
-            pf_forcevector[m]   = fik;
+            f_ik[m]             = fik;
         }
         if (FA)
         {
-            FA->add_pairforce(ai, ak, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, ak, ForceAnal::Interact_ANGLE, f_ik);
         }
     }
     return vtot;
@@ -1459,7 +1470,7 @@ real quartic_angles(int nbonds,
                     ForceAnalysis *FA)
 {
     int  i, j, ai, aj, ak, t1, t2, type;
-    rvec r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik, f_ij, f_kj;
     real cos_theta, cos_theta2, theta, dt, dVdt, va, dtp, c, vtot;
     ivec jt, dt_ij, dt_kj;
 
@@ -1511,6 +1522,8 @@ real quartic_angles(int nbonds,
 
             for (m = 0; (m < DIM); m++)         /*  39		*/
             {
+                f_ij[m]   = (cii - cik) * r_ij[m];
+                f_kj[m]   = (ckk - cik) * r_kj[m];
                 f_i[m]    = -(cik*r_kj[m]-cii*r_ij[m]);
                 f_k[m]    = -(cik*r_ij[m]-ckk*r_kj[m]);
                 f_j[m]    = -f_i[m]-f_k[m];
@@ -1521,7 +1534,8 @@ real quartic_angles(int nbonds,
 
             if (FA)
             {
-                FA->add_angle(ai, aj, ak, f_i, f_j, f_k, r_ij, r_kj, r_ik);
+                FA->add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+                FA->add_pairforce(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
             }
 
             if (g)
@@ -2322,17 +2336,12 @@ static real low_angres(int nbonds,
                        const t_pbc *pbc, const t_graph *g,
                        real lambda, real *dvdlambda,
                        gmx_bool bZAxis,
-                       ForceAnalysis gmx_unused *FA)
+                       ForceAnalysis *FA)
 {
-    if (FA)
-    {
-        gmx_fatal(FARGS, "low_angres not supported.");
-    }
-
     int  i, m, type, ai, aj, ak, al;
     int  t1, t2;
     real phi, cos_phi, cos_phi2, vid, vtot, dVdphi;
-    rvec r_ij, r_kl, f_i, f_k = {0, 0, 0};
+    rvec r_ij, r_kl, f_ij, f_kl, f_i, f_k = {0, 0, 0};
     real st, sth, nrij2, nrkl2, c, cij, ckl;
 
     ivec dt;
@@ -2385,15 +2394,24 @@ static real low_angres(int nbonds,
 
             for (m = 0; m < DIM; m++)                   /*  18+18       */
             {
+                f_ij[m]   = -cij * r_ij[m];
+                f_kl[m]   = c * r_kl[m];
                 f_i[m]    = (c*r_kl[m]-cij*r_ij[m]);
                 f[ai][m] += f_i[m];
                 f[aj][m] -= f_i[m];
                 if (!bZAxis)
                 {
+                    f_ij[m]  += c * r_ij[m];
+                    f_kl[m]  -= ckl * r_kl[m];
                     f_k[m]    = (c*r_ij[m]-ckl*r_kl[m]);
                     f[ak][m] += f_k[m];
                     f[al][m] -= f_k[m];
                 }
+            }
+            if (FA)
+            {
+                FA->add_pairforce(ai, aj, ForceAnal::Interact_DIHEDRAL, f_ij);
+                FA->add_pairforce(ak, al, ForceAnal::Interact_DIHEDRAL, f_kl);
             }
 
             if (g)
@@ -3477,7 +3495,7 @@ real g96bonds(int nbonds,
 {
     int  i, m, ki, ai, aj, type;
     real dr2, fbond, vbond, fij, vtot;
-    rvec dx, pf_forcevector;
+    rvec dx, pfvec;
     ivec dt;
 
     vtot = 0.0;
@@ -3510,11 +3528,11 @@ real g96bonds(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pfvec);
         }
     }               /* 44 TOTAL	*/
     return vtot;
@@ -3545,7 +3563,7 @@ real g96angles(int nbonds,
                ForceAnalysis *FA)
 {
     int  i, ai, aj, ak, type, m, t1, t2;
-    rvec r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik, f_ij, f_kj;
     real cos_theta, dVdt, va, vtot;
     real rij_1, rij_2, rkj_1, rkj_2, rijrkj_1;
     rvec f_i, f_j, f_k;
@@ -3577,6 +3595,8 @@ real g96angles(int nbonds,
 
         for (m = 0; (m < DIM); m++)     /*  42	*/
         {
+            f_ij[m]   = dVdt * (rijrkj_1 - rij_2 * cos_theta) * r_ij[m];
+            f_kj[m]   = dVdt * (rijrkj_1 - rkj_2 * cos_theta) * r_kj[m];
             f_i[m]    = dVdt*(r_kj[m]*rijrkj_1 - r_ij[m]*rij_2*cos_theta);
             f_k[m]    = dVdt*(r_ij[m]*rijrkj_1 - r_kj[m]*rkj_2*cos_theta);
             f_j[m]    = -f_i[m]-f_k[m];
@@ -3586,7 +3606,8 @@ real g96angles(int nbonds,
         }
         if (FA)
         {
-            FA->add_angle(ai, aj, ak, f_i, f_j, f_k, r_ij, r_kj, r_ik);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+            FA->add_pairforce(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
         }
 
         if (g)
@@ -3621,7 +3642,7 @@ real cross_bond_bond(int nbonds,
     int  i, ai, aj, ak, type, m, t1, t2;
     rvec r_ij, r_kj, r_ik;
     real vtot, vrr, s1, s2, r1, r2, r1e, r2e, krr;
-    rvec f_i, f_j, f_k;
+    rvec f_i, f_j, f_k, f_ij, f_kj;
     ivec jt, dt_ij, dt_kj;
 
     vtot = 0.0;
@@ -3653,19 +3674,22 @@ real cross_bond_bond(int nbonds,
         vtot += vrr;
 
         /* Forces */
-        svmul(-krr*s2/r1, r_ij, f_i);
-        svmul(-krr*s1/r2, r_kj, f_k);
+        svmul(-krr*s2/r1, r_ij, f_ij);
+        svmul(-krr*s1/r2, r_kj, f_kj);
 
         for (m = 0; (m < DIM); m++)     /*  12	*/
         {
-            f_j[m]    = -f_i[m] - f_k[m];
+            f_i[m]    = f_ij[m];
+            f_j[m]    = -f_ij[m] - f_kj[m];
+            f_k[m]    = f_kj[m];
             f[ai][m] += f_i[m];
             f[aj][m] += f_j[m];
             f[ak][m] += f_k[m];
         }        
         if (FA)
         {
-            FA->add_angle(ai, aj, ak, f_i, f_j, f_k, r_ij, r_kj, r_ik);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, f_ij);
+            FA->add_pairforce(ak, aj, ForceAnal::Interact_BOND, f_kj);
         }
 
         /* Virial stuff */
@@ -3701,7 +3725,7 @@ real cross_bond_angle(int nbonds,
     int  i, ai, aj, ak, type, m, t1, t2;
     rvec r_ij, r_kj, r_ik;
     real vtot, vrt, s1, s2, s3, r1, r2, r3, r1e, r2e, r3e, krt, k1, k2, k3;
-    rvec f_i, f_j, f_k;
+    rvec f_i, f_j, f_k, f_ij, f_kj, f_ik;
     ivec jt, dt_ij, dt_kj;
 
     vtot = 0.0;
@@ -3741,15 +3765,19 @@ real cross_bond_angle(int nbonds,
         k3 = -krt*(s1+s2)/r3;
         for (m = 0; (m < DIM); m++)
         {
-            f_i[m] = k1*r_ij[m] + k3*r_ik[m];
-            f_k[m] = k2*r_kj[m] - k3*r_ik[m];
+            f_ij[m] = k1 * r_ij[m];
+            f_kj[m] = k2 * r_kj[m];
+            f_ik[m] = k3 * r_ik[m];
+            f_i[m] = f_ij[m] + f_ik[m];
+            f_k[m] = f_kj[m] - f_ik[m];
             f_j[m] = -f_i[m] - f_k[m];
         }
         if (FA)
         {
-            FA->add_angle(ai, aj, ak, f_i, f_j, f_k, r_ij, r_kj, r_ik);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+            FA->add_pairforce(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
+            FA->add_pairforce(ai, ak, ForceAnal::Interact_ANGLE, f_ik);
         }
-
         for (m = 0; (m < DIM); m++)     /*  12	*/
         {
             f[ai][m] += f_i[m];
@@ -3826,7 +3854,7 @@ real tab_bonds(int nbonds,
 {
     int  i, m, ki, ai, aj, type, table;
     real dr, dr2, fbond, vbond, fij, vtot;
-    rvec dx, pf_forcevector;
+    rvec dx, pfvec;
     ivec dt;
 
     vtot = 0.0;
@@ -3868,11 +3896,11 @@ real tab_bonds(int nbonds,
             f[aj][m]           -= fij;
             fshift[ki][m]      += fij;
             fshift[CENTRAL][m] -= fij;
-            pf_forcevector[m]   = fij;
+            pfvec[m]            = fij;
         }
         if (FA)
         {
-            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pf_forcevector);
+            FA->add_pairforce(ai, aj, ForceAnal::Interact_BOND, pfvec);
         }
     }               /* 62 TOTAL	*/
     return vtot;
@@ -3888,7 +3916,7 @@ real tab_angles(int nbonds,
                 ForceAnalysis *FA)
 {
     int  i, ai, aj, ak, t1, t2, type, table;
-    rvec r_ij, r_kj, r_ik;
+    rvec r_ij, r_kj, r_ik, f_ij, f_kj;
     real cos_theta, cos_theta2, theta, dVdt, va, vtot;
     ivec jt, dt_ij, dt_kj;
 
@@ -3933,6 +3961,8 @@ real tab_angles(int nbonds,
 
             for (m = 0; (m < DIM); m++)         /*  39		*/
             {
+                f_ij[m]   = (cii - cik) * r_ij[m];
+                f_kj[m]   = (ckk - cik) * r_kj[m];
                 f_i[m]    = -(cik*r_kj[m]-cii*r_ij[m]);
                 f_k[m]    = -(cik*r_ij[m]-ckk*r_kj[m]);
                 f_j[m]    = -f_i[m]-f_k[m];
@@ -3942,7 +3972,8 @@ real tab_angles(int nbonds,
             }
             if (FA)
             {
-                FA->add_angle(ai, aj, ak, f_i, f_j, f_k, r_ij, r_kj, r_ik);
+                FA->add_pairforce(ai, aj, ForceAnal::Interact_ANGLE, f_ij);
+                FA->add_pairforce(ak, aj, ForceAnal::Interact_ANGLE, f_kj);
             }
             if (g)
             {
