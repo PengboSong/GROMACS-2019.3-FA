@@ -28,19 +28,22 @@ ForceAnalysis::ForceAnalysis(int nfile, const t_filenm fnm[], gmx_mtop_t *mtop, 
 
     force_deviation.resizeWithPadding(atomn);
 
-    switch (datamode)
-    {
-        case ForceAnal::DATA_MODE::SummedMode:
-            summed_forces = ForceAnal::SummedData(grp1idx, grp2idx, threshold);
-            break;
-        case ForceAnal::DATA_MODE::DetailedMode:
-            detailed_forces = ForceAnal::DetailedData(grp1idx, grp2idx, threshold);
-            break;
-        case ForceAnal::DATA_MODE::ListMode:
-            listed_forces = ForceAnal::ListData(threshold);
-            break;
-        default:
-            break;
+    for (ForceAnal::GroupPairParaSet& para : grppairparas)
+    {        
+        switch (para.datamode)
+        {
+            case ForceAnal::DATA_MODE::SummedMode:
+                para.forces = gmx::Variant::create(ForceAnal::SummedData(para.grp1idx, para.grp2idx, para.threshold));
+                break;
+            case ForceAnal::DATA_MODE::DetailedMode:
+                para.forces = gmx::Variant::create(ForceAnal::DetailedData(para.grp1idx, para.grp2idx, para.threshold));
+                break;
+            case ForceAnal::DATA_MODE::ListMode:
+                para.forces = gmx::Variant::create(ForceAnal::ListData(para.threshold));
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -50,28 +53,24 @@ ForceAnalysis::~ForceAnalysis()
 
 void ForceAnalysis::init_outfiles()
 {
-    // If output result files already exist, clean file contents    
-    if (!res_txt_fn.empty())
+    // If output result files already exist, clean file contents
+    for (ForceAnal::GroupPairParaSet& para : grppairparas)
     {
-        std::ofstream txtfile(res_txt_fn, std::ios::out | std::ios::trunc);
-        if (txtfile.is_open())
-            txtfile.close();
-    }
-    if (!res_bin_fn.empty())
-    {
-        std::ofstream binfile(res_bin_fn, std::ios::out | std::ios::trunc);
-        if (binfile.is_open())
+        if (!para.res_txt_fn.empty())
         {
-            uint8_t filecode = static_cast<uint8_t>(datamode);
-            binfile.write((char*)&filecode, sizeof(uint8_t));
-            // Instead of writing group index range data, using standalone atom map
-            /*
-            binfile.write((char*)&grp1idx.first, sizeof(ForceAnal::atomindex));
-            binfile.write((char*)&grp1idx.second, sizeof(ForceAnal::atomindex));
-            binfile.write((char*)&grp2idx.first, sizeof(ForceAnal::atomindex));
-            binfile.write((char*)&grp2idx.second, sizeof(ForceAnal::atomindex));
-            */
-            binfile.close();
+            std::ofstream txtfile(para.res_txt_fn, std::ios::out | std::ios::trunc);
+            if (txtfile.is_open())
+                txtfile.close();
+        }
+        if (!para.res_bin_fn.empty())
+        {
+            std::ofstream binfile(para.res_bin_fn, std::ios::out | std::ios::trunc);
+            if (binfile.is_open())
+            {
+                uint8_t filecode = static_cast<uint8_t>(para.datamode);
+                binfile.write((char*)&filecode, sizeof(uint8_t));
+                binfile.close();
+            }
         }
     }
     if (!totf_bin_fn.empty())
@@ -81,12 +80,17 @@ void ForceAnalysis::init_outfiles()
         {
             uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
             totfile.write((char*)&filecode, sizeof(uint8_t));
-            // Instead of writing group index range data, using standalone atom map
-            /*
-            totfile.write((char*)&grp1idx.first, sizeof(ForceAnal::atomindex));
-            totfile.write((char*)&grp1idx.second, sizeof(ForceAnal::atomindex));
-            */
             totfile.close();
+        }
+    }
+    if (!restotf_bin_fn.empty())
+    {
+        std::ofstream restotfile(restotf_bin_fn, std::ios::out | std::ios::trunc);
+        if (restotfile.is_open())
+        {
+            uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
+            restotfile.write((char*)&filecode, sizeof(uint8_t));
+            restotfile.close();
         }
     }
     if (!atomf_nb_bin_fn.empty())
@@ -101,7 +105,7 @@ void ForceAnalysis::init_outfiles()
     }
     if (!atomf_nb_b_bin_fn.empty())
     {
-        std::ofstream nbbatomfile(atomf_nb_bin_fn, std::ios::out | std::ios::trunc);
+        std::ofstream nbbatomfile(atomf_nb_b_bin_fn, std::ios::out | std::ios::trunc);
         if (nbbatomfile.is_open())
         {
             uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
@@ -116,135 +120,53 @@ void ForceAnalysis::init_outfiles()
         {
             uint8_t filecode = static_cast<uint8_t>(ForceAnal::DATA_MODE::AtomForceMode);
             devfile.write((char*)&filecode, sizeof(uint8_t));
-            // Instead of writing group index range data, using standalone atom map
-            /*
-            devfile.write((char*)&grp1idx.first, sizeof(ForceAnal::atomindex));
-            devfile.write((char*)&grp1idx.second, sizeof(ForceAnal::atomindex));
-            */
             devfile.close();
         }
-    }
-
-}
-
-bool ForceAnalysis::atom_in_grp1(const int idx)
-{
-    return (idx >= grp1aid.first) && (idx < grp1aid.second);
-}
-
-bool ForceAnalysis::atom_in_grp2(const int idx)
-{
-    return (idx >= grp2aid.first) && (idx < grp2aid.second);
-}
-
-bool ForceAnalysis::in_grp1(const int idx)
-{
-    // For atom in group 1, its ID should be in range grp1_start <= aid < grp1_end
-    bool inrange = (idx >= grp1idx.first) && (idx < grp1idx.second);
-    if (exclgrp1.empty() || !inrange) return inrange;
-    else
-    {
-        for (const int& ai : exclgrp1)
-            if (ai == idx)
-            {
-                inrange = false;
-                break;
-            }
-        return inrange;
-    }
-}
-
-bool ForceAnalysis::in_grp2(const int idx)
-{
-    // For atom in group 2, its ID should be in range grp2_start <= aid < grp2_end
-    bool inrange = (idx >= grp2idx.first) && (idx < grp2idx.second);
-    if (exclgrp2.empty() || !inrange) return inrange;
-    else
-    {
-        for (const int& ai : exclgrp2)
-            if (ai == idx)
-            {
-                inrange = false;
-                break;
-            }
-        return inrange;
-    }
-}
-
-bool ForceAnalysis::in_grp(const int i, const int j)
-{
-    return in_grp1(i) && in_grp2(j);
-}
-
-void ForceAnalysis::mapping_index(int &i, int &j)
-{
-    switch (forceunit)
-    {
-        case ForceAnal::FORCE_UNIT::Atom:
-            break;
-        case ForceAnal::FORCE_UNIT::Residue:
-            i = resmap[i];
-            j = resmap[j];
-            break;
-        case ForceAnal::FORCE_UNIT::Molecule:
-            i = molmap[i];
-            j = molmap[j];
-            break;
     }
 }
 
 void ForceAnalysis::add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij)
 {
-    if (datamode == ForceAnal::DATA_MODE::None) return;
-    switch (forceunit)
+    for (ForceAnal::GroupPairParaSet& para : grppairparas)
     {
-        case ForceAnal::FORCE_UNIT::Atom:
-            break;
-        case ForceAnal::FORCE_UNIT::Residue:
-            i = resmap[i];
-            j = resmap[j];
-            break;
-        case ForceAnal::FORCE_UNIT::Molecule:
-            i = molmap[i];
-            j = molmap[j];
-            break;
-    }
-    if (in_grp(i, j))
-    {
-        switch (datamode)
+        bool addfij = para.grp1.count(i) && para.grp2.count(j), addfji = para.grp1.count(j) && para.grp2.count(i);
+        if (addfij)
         {
-            case ForceAnal::DATA_MODE::SummedMode:
-                summed_forces.add_detailed_force(i, j, type, f_ij);
-                break;
-            case ForceAnal::DATA_MODE::DetailedMode:
-                detailed_forces.add_detailed_force(i, j, type, f_ij);
-                break;
-            case ForceAnal::DATA_MODE::ListMode:
-                listed_forces.add_detailed_force(i, j, type, f_ij);
-                break;
-            default:
-                // Do Nothing
-                break;
+            switch (para.datamode)
+            {
+                case ForceAnal::DATA_MODE::SummedMode:
+                    para.forces.castRef<ForceAnal::SummedData>().add_detailed_force(para.grp1.at(i), para.grp2.at(j), type, f_ij);
+                    break;
+                case ForceAnal::DATA_MODE::DetailedMode:
+                    para.forces.castRef<ForceAnal::DetailedData>().add_detailed_force(para.grp1.at(i), para.grp2.at(j), type, f_ij);
+                    break;
+                case ForceAnal::DATA_MODE::ListMode:
+                    para.forces.castRef<ForceAnal::ListData>().add_detailed_force(para.grp1.at(i), para.grp2.at(j), type, f_ij);
+                    break;
+                default:
+                    // Do Nothing
+                    break;
+            }
         }
-    }
-    rvec f_ji;
-    rvec_opp(f_ij, f_ji);
-    if (in_grp(j, i))
-    {
-        switch (datamode)
+        if (addfji)
         {
-            case ForceAnal::DATA_MODE::SummedMode:
-                summed_forces.add_detailed_force(j, i, type, f_ji);
-                break;
-            case ForceAnal::DATA_MODE::DetailedMode:
-                detailed_forces.add_detailed_force(j, i, type, f_ji);
-                break;
-            case ForceAnal::DATA_MODE::ListMode:
-                listed_forces.add_detailed_force(j, i, type, f_ji);
-                break;
-            default:
-                // Do Nothing
-                break;
+            rvec f_ji;
+            rvec_opp(f_ij, f_ji);
+            switch (para.datamode)
+            {
+                case ForceAnal::DATA_MODE::SummedMode:
+                    para.forces.castRef<ForceAnal::SummedData>().add_detailed_force(para.grp1.at(j), para.grp2.at(i), type, f_ji);
+                    break;
+                case ForceAnal::DATA_MODE::DetailedMode:
+                    para.forces.castRef<ForceAnal::DetailedData>().add_detailed_force(para.grp1.at(j), para.grp2.at(i), type, f_ji);
+                    break;
+                case ForceAnal::DATA_MODE::ListMode:
+                    para.forces.castRef<ForceAnal::ListData>().add_detailed_force(para.grp1.at(j), para.grp2.at(i), type, f_ji);
+                    break;
+                default:
+                    // Do Nothing
+                    break;
+            }
         }
     }
 }
@@ -294,6 +216,8 @@ int ForceAnalysis::dbres(rvec f_i, rvec r_ij, rvec r_ik, rvec f_ij, rvec f_ik)
     svmul(c[YY], r_ik, f_ik);
     sfree(ipiv);
     sfree(c);
+    free_matrix(R);
+    // ! IMPORTANT ! FREE ALL ALLOCATED MEMORY
     return 0;
 }
 
@@ -306,7 +230,6 @@ int ForceAnalysis::trires(rvec f_i, rvec r_ij, rvec r_ik, rvec r_il, rvec f_ij, 
     nrhs = 1;
     snew(ipiv, n);
     snew(c, n);
-    copy_rvec_to_3dvec(f_i, c);
     R = alloc_matrix(n, n);
     copy_rvec_to_3dvec(r_ij, R[XX]);
     copy_rvec_to_3dvec(r_ik, R[YY]);
@@ -320,6 +243,8 @@ int ForceAnalysis::trires(rvec f_i, rvec r_ij, rvec r_ik, rvec r_il, rvec f_ij, 
     svmul(c[ZZ], r_il, f_il);
     sfree(ipiv);
     sfree(c);
+    free_matrix(R);
+    // ! IMPORTANT ! FREE ALL ALLOCATED MEMORY
     return 0;
 }
 
@@ -573,21 +498,19 @@ void ForceAnalysis::write_frame(bool write_last_frame)
         return ;
     }
 
-    if (datamode == ForceAnal::DATA_MODE::None) return;
-
-    // Can not average forces in Listed Forces mode
-    if (datamode == ForceAnal::DATA_MODE::ListMode)
-        Naverage = 1;
-
-    if ((frame_count % Naverage) == 0)
-        write_forces();
+    for (ForceAnal::GroupPairParaSet& para : grppairparas)
+    {
+        if (para.datamode == ForceAnal::DATA_MODE::None) continue;
+        // For Listed Forces mode, `Naverage` only controls data output
+        if (frame_count % Naverage == 0) write_forces(para);
+    }
 }
 
-void ForceAnalysis::write_forces()
+void ForceAnalysis::write_forces(ForceAnal::GroupPairParaSet& para)
 {
-    if (!res_bin_fn.empty())
+    if (!para.res_bin_fn.empty())
     {
-        std::ofstream binstream(res_bin_fn, std::ios::binary | std::ios::ate | std::ios::in);
+        std::ofstream binstream(para.res_bin_fn, std::ios::binary | std::ios::ate | std::ios::in);
         
         if (!binstream.is_open())
             gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to file.\n");
@@ -599,16 +522,16 @@ void ForceAnalysis::write_forces()
 
         int64_t saddr = binstream.tellp();
         int64_t eaddr = 0;
-        switch (datamode)
+        switch (para.datamode)
         {
             case ForceAnal::DATA_MODE::SummedMode:
-                summed_forces.write_forces_bin(binstream, forces_count, saddr, eaddr);
+                para.forces.castRef<ForceAnal::SummedData>().write_forces_bin(binstream, forces_count, saddr, eaddr);
                 break;
             case ForceAnal::DATA_MODE::DetailedMode:
-                detailed_forces.write_forces_bin(binstream, forces_count, saddr, eaddr);
+                para.forces.castRef<ForceAnal::DetailedData>().write_forces_bin(binstream, forces_count, saddr, eaddr);
                 break;
             case ForceAnal::DATA_MODE::ListMode:
-                listed_forces.write_forces_bin(binstream, forces_count, saddr, eaddr);
+                para.forces.castRef<ForceAnal::ListData>().write_forces_bin(binstream, forces_count, saddr, eaddr);
                 break;
             default:
                 // Do Nothing
@@ -623,25 +546,25 @@ void ForceAnalysis::write_forces()
         binstream.close();
     }
 
-    if (!res_txt_fn.empty())
+    if (!para.res_txt_fn.empty())
     {
-        std::ofstream txtstream(res_txt_fn, std::ios::app);
+        std::ofstream txtstream(para.res_txt_fn, std::ios::app);
 
         if (!txtstream.is_open())
             gmx_fatal(FARGS, "GROMACS Force Analysis module can not write force data to file.\n");
         
         txtstream << "START FRAME " << frame_count << std::endl;
 
-        switch (datamode)
+        switch (para.datamode)
         {
             case ForceAnal::DATA_MODE::SummedMode:
-                summed_forces.write_forces_txt(txtstream);
+                para.forces.castRef<ForceAnal::SummedData>().write_forces_txt(txtstream);
                 break;
             case ForceAnal::DATA_MODE::DetailedMode:
-                detailed_forces.write_forces_txt(txtstream);
+                para.forces.castRef<ForceAnal::DetailedData>().write_forces_txt(txtstream);
                 break;
             case ForceAnal::DATA_MODE::ListMode:
-                listed_forces.write_forces_txt(txtstream);
+                para.forces.castRef<ForceAnal::ListData>().write_forces_txt(txtstream);
                 break;
             default:
                 // Do Nothing
@@ -653,16 +576,16 @@ void ForceAnalysis::write_forces()
         txtstream.close();
     }
 
-    switch (datamode)
+    switch (para.datamode)
     {
         case ForceAnal::DATA_MODE::SummedMode:
-            summed_forces.clear();
+            para.forces.castRef<ForceAnal::SummedData>().clear();
             break;
         case ForceAnal::DATA_MODE::DetailedMode:
-            detailed_forces.clear();
+            para.forces.castRef<ForceAnal::DetailedData>().clear();
             break;
         case ForceAnal::DATA_MODE::ListMode:
-            listed_forces.clear();
+            para.forces.castRef<ForceAnal::ListData>().clear();
             break;
         default:
             // Do Nothing
@@ -670,7 +593,7 @@ void ForceAnalysis::write_forces()
     }
 }
 
-void ForceAnalysis::write_atom_forces(const char* fnm, const rvec* f)
+void ForceAnalysis::write_atom_forces(ForceAnal::FORCE_UNIT forceunit, const char* fnm, const rvec* f)
 {
     rvec fi;
     uint32_t forces_count = 0;
@@ -686,7 +609,6 @@ void ForceAnalysis::write_atom_forces(const char* fnm, const rvec* f)
             uint32_t ai, idx;
             for (ai = 0; ai < atomn; ++ai)
             {
-                if (!in_grp1(ai)) continue;
                 idx = 4 * forces_count;
                 copy_rvec(f[ai], fi);
                 buff[idx + XX] = fi[XX];
@@ -713,7 +635,6 @@ void ForceAnalysis::write_atom_forces(const char* fnm, const rvec* f)
             for (uint32_t ai = 0; ai < atomn; ++ai)
             {
                 resi = pmap->at(ai);
-                if (!in_grp1(resi)) continue;
                 idx = 4 * resi;
                 copy_rvec(f[ai], fi);
                 resforces[idx + XX] += fi[XX];
@@ -749,17 +670,20 @@ void ForceAnalysis::write_atom_forces(const char* fnm, const rvec* f)
 void ForceAnalysis::write_atom_forces(ForceAnal::OUT_FORCE_TYPE out_ftype, rvec *f)
 {
     if (out_ftype == ForceAnal::OUT_FORCE_TYPE::AtomForceTotal && !totf_bin_fn.empty())
-        write_atom_forces(totf_bin_fn.c_str(), f);
+    {
+        write_atom_forces(ForceAnal::FORCE_UNIT::Atom, totf_bin_fn.c_str(), f);
+        write_atom_forces(ForceAnal::FORCE_UNIT::Residue, ForceAnal::modfnm(totf_bin_fn, "", "_res").c_str(), f);
+    }
     else if (out_ftype == ForceAnal::OUT_FORCE_TYPE::AtomForceNonbonded && !atomf_nb_bin_fn.empty())
-        write_atom_forces(atomf_nb_bin_fn.c_str(), f);
+        write_atom_forces(ForceAnal::FORCE_UNIT::Atom, atomf_nb_bin_fn.c_str(), f);
     else if (out_ftype == ForceAnal::OUT_FORCE_TYPE::AtomForceNonbondedBonded && !atomf_nb_b_bin_fn.empty())
-        write_atom_forces(atomf_nb_b_bin_fn.c_str(), f);
+        write_atom_forces(ForceAnal::FORCE_UNIT::Atom, atomf_nb_b_bin_fn.c_str(), f);
 }
 
 void ForceAnalysis::write_dev_forces(bool clearvec)
 {
     if (!fdev_bin_fn.empty())
-        write_atom_forces(fdev_bin_fn.c_str(), as_rvec_array(force_deviation.data()));
+        write_atom_forces(ForceAnal::FORCE_UNIT::Atom, fdev_bin_fn.c_str(), as_rvec_array(force_deviation.data()));
     if (clearvec)
     {
         force_deviation.clear();

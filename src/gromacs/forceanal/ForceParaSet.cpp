@@ -6,13 +6,11 @@
 */
 
 #include <algorithm>
-#include <set>
 #include <fstream>
+#include <iostream>
 #include <utility>
 
 #include "gromacs/commandline/filenm.h"
-#include "gromacs/fileio/readinp.h"
-#include "gromacs/fileio/warninp.h"
 #include "gromacs/topology/index.h"
 #include "gromacs/utility/filestream.h"
 
@@ -22,17 +20,11 @@ namespace ForceAnal {
 
 ForceParaSet::ForceParaSet()
  : outpara_fn("faout.par"),
-   datamode(DATA_MODE::None),
-   output_type(OUT_NOTHING),
-   forceunit(FORCE_UNIT::Atom),
-   threshold(1.0E-3F),
    force_threshold(5.0E-3F),
    atomn(0),
    resn(0),
    moln(0),
    Naverage(1),
-   grp1idx(0, 0),
-   grp2idx(0, 0),
    eeltype(eelCUT),
    vdwtype(evdwCUT)
 {
@@ -40,10 +32,6 @@ ForceParaSet::ForceParaSet()
 
 ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_global, const t_inputrec *inputrec)
  : outpara_fn("faout.par"),
-   datamode(DATA_MODE::None),
-   output_type(OUT_NOTHING),
-   forceunit(FORCE_UNIT::Atom),
-   threshold(1.0E-3F),
    force_threshold(5.0E-3F),
    atomn(top_global->natoms),
    Naverage(1),
@@ -56,6 +44,10 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_glob
     res_txt_fn = handle_empty_string(opt2fn_null("-ft", nfile, fnm));
     // -fa is optional
     totf_bin_fn = handle_empty_string(opt2fn_null("-fa", nfile, fnm));
+    // Derived other summed force data filenames from the given one
+    restotf_bin_fn = modfnm(totf_bin_fn, "", "_res");
+    atomf_nb_bin_fn = modfnm(totf_bin_fn, "", "_nb");
+    atomf_nb_b_bin_fn = modfnm(totf_bin_fn, "", "_nb+b");
     // -fd is optional
     fdev_bin_fn = handle_empty_string(opt2fn_null("-fd", nfile, fnm));
     // -fn is optional
@@ -63,111 +55,69 @@ ForceParaSet::ForceParaSet(int nfile, const t_filenm fnm[], gmx_mtop_t *top_glob
     // -fmp is optional
     map_fn = handle_empty_string(opt2fn_null("-fmp", nfile, fnm));
 
-    // Derived other atom force data filenames from the specified one
-    std::string::size_type sz = totf_bin_fn.find_first_of('.');
-    if (sz == std::string::npos)
-    {
-        atomf_nb_bin_fn = totf_bin_fn + "_nb";
-        atomf_nb_b_bin_fn = totf_bin_fn + "_nb+b";
-    }
-    else
-    {
-        std::string atomf_prefix = totf_bin_fn.substr(0, sz), atomf_suffix = totf_bin_fn.substr(sz);
-        atomf_nb_bin_fn = atomf_prefix + "_nb" + atomf_suffix;
-        atomf_nb_b_bin_fn = atomf_prefix + "_nb+b" + atomf_suffix;
-    }
+    mapAtomRes(top_global);
     
     setParas(nfile, fnm);
-
-    mapAtomRes(top_global);
-
-    setGroup();
 }
 
 ForceParaSet::~ForceParaSet()
 {
 }
 
-bool ForceParaSet::checkterm2bool(const char* term, bool def)
+void ForceParaSet::handle_index(FORCE_UNIT forceunit, int gi, const int* block, const int blocknr, const std::vector<atomindex>& amap, GrpIdx& grpidx, AtomMap& grp)
 {
-    if (term == INP_YES)
-        return true;
-    else if (term == INP_NO)
-        return false;
-    else
-        return def;
-}
-
-std::string ForceParaSet::handle_empty_string(const char *str)
-{
-    if (str != nullptr)
-        return std::string(str);
-    else
-        return std::string();
-}
-
-void ForceParaSet::handle_index(FORCE_UNIT forceunit, const int* block, const int blocknr, const std::vector<atomindex>& resmap, GrpIdx& grpidx, GrpIdx& grpaid, std::vector<atomindex>& excl)
-{
-    int grpstart, grpend, grplen;
     if (forceunit == FORCE_UNIT::Atom)
     {
-        grpstart = *std::min_element(block, block + blocknr);
-        grpend = *std::max_element(block, block + blocknr) + 1;
-        grplen = grpend - grpstart;
-        grpidx.first = grpstart;
-        grpidx.second = grpend;
-        grpaid.first = grpstart;
-        grpaid.second = grpend;
-        if (blocknr < grplen)
-        {
-            std::vector<int> filled_range(grplen, 0);
-            for (int ni = 0; ni < blocknr; ++ni)
-                filled_range[block[ni] - grpstart] = 1;
-            for (std::size_t idx = 0; idx < filled_range.size(); ++idx)
-                if (filled_range[idx] == 0)
-                    excl.push_back(grpstart + idx);
-        }
-    }
-    else
-    {
-        grpidx.first = *std::min_element(block, block + blocknr);
+        grpidx.first  = *std::min_element(block, block + blocknr);
         grpidx.second = *std::max_element(block, block + blocknr) + 1;
-
-        const char* identifier = (forceunit == FORCE_UNIT::Residue) ? "resi." : "mol";
-        
-        std::set<int> uniqres;
-        // resmap/molmap: index 0 -> atom 1
-        for (int ni = 0; ni < blocknr; ++ni)
-            uniqres.insert(resmap[block[ni]]);
-        grpstart = *std::min_element(uniqres.begin(), uniqres.end());
-        grpend = *std::max_element(uniqres.begin(), uniqres.end()) + 1;
-        grplen = grpend - grpstart;
-        grpidx.first = grpstart;
-        grpidx.second = grpend;
-        if (uniqres.size() < static_cast<std::size_t>(grplen))
-        {
-            std::vector<int> filled_range(grplen, 0);
-            for (const int& resi : uniqres)
-                filled_range[resi - grpstart] = 1;
-            for (std::size_t idx = 0; idx < filled_range.size(); ++idx)
-                if (filled_range[idx] == 0)
-                    excl.push_back(grpstart + idx);
-        }
+        for (int ni = 0; ni < blocknr; ++ni) grp[block[ni]] = block[ni];
     }
-    const char* identifier;
-    switch (forceunit)
+    else if (forceunit == FORCE_UNIT::Residue || forceunit == FORCE_UNIT::Molecule)
     {
-        case FORCE_UNIT::Atom:
-            identifier = "atom";
-            break;
-        case FORCE_UNIT::Residue:
-            identifier = "resi.";
-            break;
-        case FORCE_UNIT::Molecule:
-            identifier = "mol";
-            break;
+        // resmap/molmap: index 0 -> atom 1
+        std::unordered_set<int> uniqres;
+        for (int ni = 0; ni < blocknr; ++ni) uniqres.insert(amap[block[ni]]);
+        grpidx.first  = *std::min_element(uniqres.begin(), uniqres.end());
+        grpidx.second = *std::max_element(uniqres.begin(), uniqres.end()) + 1;
+
+        // Instead of adding all atoms in residues, only selecting atoms in given block
+        for (int ni = 0; ni < blocknr; ++ni) grp[block[ni]] = amap[block[ni]];
+        // for (int ai = 0; ai < amap.size(); ++ai) if (uniqres.count(amap[ai])) grp[ai] = amap[ai];
     }
-    printf("Force group starts from %s %d to %s %d\n", identifier, grpstart, identifier, grpend - 1);
+    else if (forceunit == FORCE_UNIT::Group)
+    {
+        grpidx.first  = gi;
+        grpidx.second = gi + 1;
+        for (int ni = 0; ni < blocknr; ++ni) grp[block[ni]] = gi;
+    }
+}
+
+void ForceParaSet::format_paraset(const uint32_t atomn, const GroupPairParaSet &para)
+{
+    std::cout << "Write Text Format Force Data = " << (para.res_txt_fn.empty() ? "NO" : "YES") << std::endl;
+    std::cout << "Write Binary Format Force Data = " << (para.res_bin_fn.empty() ? "NO" : "YES") << std::endl;
+    std::cout << "Force Analysis Mode = " << para.datamode << std::endl;
+    std::cout << "Output Data Type = " << para.output_type << std::endl;
+    std::cout << "--*-- GROUP A --*--" << std::endl;
+    std::cout << "Group Name = " << para.grp1nm << std::endl;
+    std::cout << "Force Unit = " << para.fu1 << std::endl;
+    std::cout << "Number of Atoms = " << para.grp1.size() << std::endl;
+    std::cout << "Nodes Range = " << para.grp1idx << std::endl;
+    std::cout << "Atom Map Verified = " << (check_grpmap(atomn, para.grp1idx, para.grp1) ? "Success" : "Failed") << std::endl << std::endl;
+    std::cout << "--*-- GROUP B --*--" << std::endl;
+    std::cout << "Group Name = " << para.grp2nm << std::endl;
+    std::cout << "Force Unit = " << para.fu2 << std::endl;
+    std::cout << "Number of Atoms = " << para.grp2.size() << std::endl;
+    std::cout << "Nodes Range = " << para.grp2idx << std::endl;
+    std::cout << "Atom Map Verified = " << (check_grpmap(atomn, para.grp2idx, para.grp2) ? "Success" : "Failed") << std::endl;
+}
+
+bool ForceParaSet::check_grpmap(uint32_t atomn, const GrpIdx &grpidx, const AtomMap &grp)
+{
+    for (uint32_t ai = 0; ai < atomn; ++ai)
+        if (grp.count(ai) && (grp.at(ai) < grpidx.first || grp.at(ai) >= grpidx.second))
+            return false;
+    return true;
 }
 
 void ForceParaSet::mapAtomRes(gmx_mtop_t *top_global)
@@ -175,23 +125,17 @@ void ForceParaSet::mapAtomRes(gmx_mtop_t *top_global)
     // Clear resi./mol map
     atomn = top_global->natoms;
 
-    resn = 0;
-    resmap.clear();
+    resn = moln = 0;
     resmap.reserve(atomn);
-
-    moln = 0;
-    molmap.clear();
     molmap.reserve(atomn);
 
-    int nmol = 0, nres = 0;
     t_atom* patom = nullptr;
     t_atoms* patoms = nullptr;
     for (std::size_t moltypei = 0; moltypei < top_global->moltype.size(); ++moltypei)
     {
         patoms = &top_global->moltype[moltypei].atoms;
         patom = patoms->atom;
-        nmol = top_global->molblock[moltypei].nmol;
-        nres = patoms->nres;
+        int nmol = top_global->molblock[moltypei].nmol, nres = patoms->nres;
         for (int mi = 0; mi < nmol; ++mi)
         {
             for (int ai = 0; ai < patoms->nr; ++ai)
@@ -204,47 +148,13 @@ void ForceParaSet::mapAtomRes(gmx_mtop_t *top_global)
         moln += nmol;
     }
     
-    if (!map_fn.empty() && ((forceunit == FORCE_UNIT::Residue) || (forceunit == FORCE_UNIT::Molecule)))
+    if (!map_fn.empty())
     {
         std::ofstream mapstream(map_fn, std::ios::binary | std::ios::trunc);
-        uint8_t filecode = static_cast<uint8_t>(forceunit);
-        mapstream.write((char*)&filecode, sizeof(uint8_t));
         mapstream.write((char*)&atomn, sizeof(uint32_t));
-        switch (forceunit)
-        {
-            case FORCE_UNIT::Residue:
-                mapstream.write((char*)resmap.data(), sizeof(atomindex) * resmap.size());
-                break;
-            case FORCE_UNIT::Molecule:
-                mapstream.write((char*)molmap.data(), sizeof(atomindex) * molmap.size());
-                break;
-        }
+        mapstream.write((char*)resmap.data(), sizeof(atomindex) * resmap.size());
+        mapstream.write((char*)molmap.data(), sizeof(atomindex) * molmap.size());
     }
-}
-
-void ForceParaSet::setGroup()
-{
-    if (index_fn.empty())
-    {
-        grp1idx = std::make_pair<atomindex, atomindex>(0, atomn);
-        grp2idx = std::make_pair<atomindex, atomindex>(0, atomn);
-        grp1aid = std::make_pair<atomindex, atomindex>(0, atomn);
-        grp2aid = std::make_pair<atomindex, atomindex>(0, atomn);
-    }
-    else
-    {
-        char** grpnms;
-        t_blocka* grps = init_index(index_fn.c_str(), &grpnms);
-        for (int gi = 0; gi < grps->nr; ++gi)
-        {
-            int blocks = grps->index[gi];
-            if (grpnms[gi] == grp1nm)
-                handle_index(forceunit, &grps->a[blocks], grps->index[gi + 1] - blocks, resmap, grp1idx, grp1aid, exclgrp1);
-            if (grpnms[gi] == grp2nm)
-                handle_index(forceunit, &grps->a[blocks], grps->index[gi + 1] - blocks, resmap, grp2idx, grp2aid, exclgrp2);
-        }
-    }
-
 }
 
 void ForceParaSet::setParas(int nfile, const t_filenm fnm[])
@@ -263,41 +173,101 @@ void ForceParaSet::setParas(int nfile, const t_filenm fnm[])
     else
         inp.clear();
 
-    std::string datamode_term = get_estr(&inp, "data-mode", "summed");
+    if (!checkterm2bool(get_estr(&inp, "summed-force-atom", "yes")))
+        totf_bin_fn.clear();
+    if (!checkterm2bool(get_estr(&inp, "summed-force-residue", "yes")))
+        restotf_bin_fn.clear();
+    if (!checkterm2bool(get_estr(&inp, "summed-force-nonbonded", "no")))
+        atomf_nb_bin_fn.clear();
+    if (!checkterm2bool(get_estr(&inp, "summed-force-nonbonded-bonded", "no")))
+        atomf_nb_b_bin_fn.clear();
 
-    if (datamode_term == "summed")
-        datamode = DATA_MODE::SummedMode;
-    else if (datamode_term == "detailed")
-        datamode = DATA_MODE::DetailedMode;
-    else if (datamode_term == "list")
-        datamode = DATA_MODE::ListMode;
-    else
-        datamode = DATA_MODE::None;
-
-    if (res_bin_fn.empty() && res_txt_fn.empty())
-        datamode = DATA_MODE::None;
-    
-    if (checkterm2bool(get_estr(&inp, "vector", "yes")))
-        output_type |= OUT_VECTOR;
-    if (checkterm2bool(get_estr(&inp, "scalar", "yes")))
-        output_type |= OUT_SCALAR;
-
-    std::string forceunit_term = get_estr(&inp, "force-unit", "residue");
-    if (forceunit_term == "atom")
-        forceunit = FORCE_UNIT::Atom;
-    else if (forceunit_term == "residue")
-        forceunit = FORCE_UNIT::Residue;
-    else if (forceunit_term == "molecule")
-        forceunit = FORCE_UNIT::Molecule;
-    
-    threshold = get_ereal(&inp, "threshold", 1.0E-3F, wi);
-    threshold *= threshold;
     Naverage = get_eint64(&inp, "naverage", 1, wi);
-    grp1nm = get_estr(&inp, "group1", "System");
-    grp2nm = get_estr(&inp, "group2", "System");
+
+    ngrppairs = get_eint(&inp, "group-pairs", 0, wi);
+    if (ngrppairs > MAXGRPPAIRN)
+        gmx_warning("Force Analysis module only supports up to %d group pairs.", MAXGRPPAIRN);
+    grppairparas.resize(ngrppairs);
+
+    for (int gi = 0; gi < ngrppairs; ++gi) setGroupPairParas(&inp, wi, gi, grppairparas[gi]);
+
+    // Format output parameters
+    std::cout << std::endl << "Write Atom Summed Force = " << (totf_bin_fn.empty() ? "NO" : "YES") << std::endl;
+    std::cout << "Write Residue Summed Force = " << (restotf_bin_fn.empty() ? "NO" : "YES") << std::endl;
+    std::cout << "Write Nonbonded Summed Force = " << (atomf_nb_bin_fn.empty() ? "NO" : "YES") << std::endl;
+    std::cout << "Write Nonbonded + Bonded Summed Force = " << (atomf_nb_b_bin_fn.empty() ? "NO" : "YES") << std::endl;
+    std::cout << "Write Force Decomposition Residual Error = " << (fdev_bin_fn.empty() ? "NO" : "YES") << std::endl;
+    std::cout << std::endl << "Average Frequency = " << Naverage << std::endl;
+    std::cout << "Number of Group Pairs = " << ngrppairs << std::endl;
+    for (int gi = 0; gi < ngrppairs; ++gi)
+    {
+        std::cout << "==*==*== GROUP " << gi << " ==*==*==" << std::endl;
+        format_paraset(atomn, grppairparas[gi]);
+        std::cout << "==*==*==*==*==*==*==*==*==" << std::endl << std::endl;
+    }
 
     gmx::TextOutputFile outpara_stream(outpara_fn);
     write_inpfile(&outpara_stream, outpara_fn.c_str(), &inp, FALSE, WriteMdpHeader::yes, wi);
 }
 
+void ForceParaSet::setGroupPairParas(std::vector<t_inpfile>* inp, warninp_t wi, int gi, GroupPairParaSet &paras)
+{
+    std::string pfx = "grp" + std::to_string(gi) + "-", sfx = "_grp" + std::to_string(gi);
+
+    std::string datamode_term = get_estr(inp, pfx + "analmode", "summed");
+    if (datamode_term == "summed")
+        paras.datamode = DATA_MODE::SummedMode;
+    else if (datamode_term == "detailed")
+        paras.datamode = DATA_MODE::DetailedMode;
+    else if (datamode_term == "list")
+        paras.datamode = DATA_MODE::ListMode;
+    else
+        paras.datamode = DATA_MODE::None;
+
+    if (res_bin_fn.empty() && res_txt_fn.empty())
+        paras.datamode = DATA_MODE::None;
+
+    if (!res_bin_fn.empty())
+        paras.res_bin_fn = modfnm(res_bin_fn, "", sfx);
+    if (!res_txt_fn.empty())
+        paras.res_txt_fn = modfnm(res_txt_fn, "", sfx);
+    
+    paras.output_type = OUT_NOTHING;
+    if (checkterm2bool(get_estr(inp, pfx + "vector", "yes")))
+        paras.output_type |= OUT_VECTOR;
+    if (checkterm2bool(get_estr(inp, pfx + "scalar", "yes")))
+        paras.output_type |= OUT_SCALAR;
+    
+    real t = get_ereal(inp, pfx + "threshold", 1.0E-3F, wi);
+    paras.threshold = t * t;
+
+    paras.fu1 = check_forceunit(get_estr(inp, pfx + "forceunitA", "residue"));
+    paras.fu2 = check_forceunit(get_estr(inp, pfx + "forceunitB", "residue"));
+    paras.grp1nm = get_estr(inp, pfx + "groupA", "System");
+    paras.grp2nm = get_estr(inp, pfx + "groupB", "System");
+
+    if (index_fn.empty())
+        throw std::runtime_error("Index file is required for group pairs analysis.");
+    
+    char** grpnms;
+    t_blocka* grps = init_index(index_fn.c_str(), &grpnms);
+    for (int gi = 0; gi < grps->nr; ++gi)
+    {
+        int blocks = grps->index[gi];
+        if (grpnms[gi] == paras.grp1nm)
+            handle_index(paras.fu1, gi, &grps->a[blocks], grps->index[gi + 1] - blocks, paras.fu1 == ForceAnal::FORCE_UNIT::Molecule ? molmap : resmap, paras.grp1idx, paras.grp1);
+        if (grpnms[gi] == paras.grp2nm)
+            handle_index(paras.fu2, gi, &grps->a[blocks], grps->index[gi + 1] - blocks, paras.fu2 == ForceAnal::FORCE_UNIT::Molecule ? molmap : resmap, paras.grp2idx, paras.grp2);
+    }
+    if (paras.fu1 == FORCE_UNIT::System)
+    {
+        paras.grp1idx = std::make_pair<atomindex, atomindex>(0, 1);
+        for (atomindex ai = 0; ai < atomn; ++ai) paras.grp1[ai] = 0;
+    }
+    if (paras.fu2 == FORCE_UNIT::System)
+    {
+        paras.grp2idx = std::make_pair<atomindex, atomindex>(0, 1);
+        for (atomindex ai = 0; ai < atomn; ++ai) paras.grp2[ai] = 0;
+    }        
+}
 }

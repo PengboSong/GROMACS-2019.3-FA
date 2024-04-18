@@ -171,6 +171,7 @@ void SummedData::write_forces_bin(std::ofstream& binstream, uint32_t& forces_cou
             // Filter forces that are too small
             if (f > lowlim)
             {
+                f = std::sqrt(f);
                 ++forces_count;
                 binstream.write((char*)&ai, sizeof(int32_t));
                 binstream.write((char*)&aj, sizeof(int32_t));

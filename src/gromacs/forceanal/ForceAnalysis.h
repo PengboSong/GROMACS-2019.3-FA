@@ -32,18 +32,6 @@ public:
 
     void next_frame() { ++frame_count; }
 
-    bool atom_in_grp1(const int idx);
-
-    bool atom_in_grp2(const int idx);
-
-    bool in_grp1(const int idx);
-
-    bool in_grp2(const int idx);
-
-    bool in_grp(const int i, const int j);
-
-    void mapping_index(int& i, int& j);
-
     void add_pairforce(int i, int j, ForceAnal::InteractionType type, rvec f_ij);
 
     void add_nonbonded(int i, int j, real pf_coul, real pf_vdw, real dx, real dy, real dz);
@@ -62,9 +50,9 @@ public:
 
     void write_frame(bool write_last_frame = false);
 
-    void write_forces();
+    void write_forces(ForceAnal::GroupPairParaSet& para);
 
-    void write_atom_forces(const char* fnm, const rvec* f);
+    void write_atom_forces(ForceAnal::FORCE_UNIT forceunit, const char* fnm, const rvec* f);
 
     void write_atom_forces(ForceAnal::OUT_FORCE_TYPE out_ftype, rvec* f);
 
@@ -74,12 +62,6 @@ private:
     uint32_t frame_count;
     
     PaddedVector<gmx::RVec> force_deviation;
-
-    ForceAnal::SummedData summed_forces;
-
-    ForceAnal::DetailedData detailed_forces;
-
-    ForceAnal::ListData listed_forces;
 };
 
 #else

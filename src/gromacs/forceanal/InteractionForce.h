@@ -37,9 +37,9 @@ public:
         if (idx != 0)
         {
             idx = 4 * (idx - 1);
-            forces[idx + XX] = f[XX];
-            forces[idx + YY] = f[YY];
-            forces[idx + ZZ] = f[ZZ];
+            forces[idx + XX] += f[XX];
+            forces[idx + YY] += f[YY];
+            forces[idx + ZZ] += f[ZZ];
         }
     }
 

@@ -285,11 +285,10 @@ real do_ewald(const t_inputrec *ir,
 
                         if (FA)
                         {
-                            if (!FA->atom_in_grp1(n)) continue;
                             fscale = 2 * scaleRecip * scale * ak;
                             for (nn = 0; nn < natoms; ++nn)
                             {
-                                if (n >= nn || !FA->atom_in_grp2(nn)) continue;
+                                if (n >= nn) continue;
                                 tmp = fscale * (et->tab_qxyz[n].im * et->tab_qxyz[nn].re - et->tab_qxyz[n].re * et->tab_qxyz[nn].im);
                                 FA->add_nonbonded_coulomb(n ,nn, tmp, mx, my, mz);
                             }

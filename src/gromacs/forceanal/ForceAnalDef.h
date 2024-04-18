@@ -12,8 +12,11 @@
 #include <cstdint>
 #include <vector>
 #include <map>
+#include <ostream>
 #include <string>
 #include <utility>
+#include <unordered_set>
+#include <unordered_map>
 
 // GROMACS include
 #include "gromacs/math/extended_vec.h"   // Additional rvec operations
@@ -50,14 +53,43 @@ namespace ForceAnal
     // res2atom map
     using Res2Atom = std::map<atomindex, std::vector<atomindex>>;
 
-    // Group index IDs
+    // Paired index IDs
     using GrpIdx = std::pair<atomindex, atomindex>;
+
+    // Group atom map
+    using AtomMap = std::unordered_map<atomindex, atomindex>;
+
+    static inline std::ostream &operator<<(std::ostream &os, const GrpIdx& idx)
+    {
+        os << '[' << idx.first << ',' << idx.second << ')';
+        return os;
+    }
 
     using OutputType = uint8_t;
 
     static const OutputType OUT_NOTHING =      0;
     static const OutputType OUT_VECTOR  = 1 << 0;
     static const OutputType OUT_SCALAR  = 1 << 1;
+
+    static inline std::ostream &operator<<(std::ostream &os, OutputType otp)
+    {
+        switch (otp)
+        {
+            case OUT_NOTHING:
+                os << "None";
+                break;
+            case OUT_VECTOR:
+                os << "Vector";
+                break;
+            case OUT_SCALAR:
+                os << "Scalar";
+                break;
+            case OUT_VECTOR + OUT_SCALAR:
+                os << "Vector + Scalar";
+                break;
+        }
+        return os;
+    }
 
     static const std::string INP_YES = "yes";
     static const std::string INP_NO = "no";
@@ -68,8 +100,31 @@ namespace ForceAnal
         SummedMode    = 1U,
         DetailedMode  = 2U,
         ListMode      = 3U,
-        AtomForceMode = 4U,
+        AtomForceMode = 4U
     };
+    
+    static inline std::ostream &operator<<(std::ostream &os, DATA_MODE mode)
+    {
+        switch (mode)
+        {
+            case DATA_MODE::None:
+                os << "None";
+                break;
+            case DATA_MODE::SummedMode:
+                os << "SummedMode";
+                break;
+            case DATA_MODE::DetailedMode:
+                os << "DetailedMode";
+                break;
+            case DATA_MODE::ListMode:
+                os << "ListMode";
+                break;
+            case DATA_MODE::AtomForceMode:
+                os << "AtomForceMode";
+                break;
+        }
+        return os;
+    }
 
     enum class FORCE_UNIT : uint8_t
     {
@@ -77,7 +132,35 @@ namespace ForceAnal
         Atom     = 1U,
         Residue  = 2U,
         Molecule = 3U,
+        Group    = 4U,
+        System   = 5U
     };
+    
+    static inline std::ostream &operator<<(std::ostream &os, FORCE_UNIT fu)
+    {
+        switch (fu)
+        {
+            case FORCE_UNIT::None:
+                os << "None";
+                break;
+            case FORCE_UNIT::Atom:
+                os << "Atom";
+                break;
+            case FORCE_UNIT::Residue:
+                os << "Residue";
+                break;
+            case FORCE_UNIT::Molecule:
+                os << "Molecule";
+                break;
+            case FORCE_UNIT::Group:
+                os << "Group";
+                break;
+            case FORCE_UNIT::System:
+                os << "System";
+                break;
+        }
+        return os;
+    }
 
     enum class OUT_FORCE_TYPE : uint8_t
     {
@@ -86,6 +169,26 @@ namespace ForceAnal
         AtomForceNonbonded       = 2U,
         AtomForceNonbondedBonded = 3U,
     };
+    
+    static inline std::ostream &operator<<(std::ostream &os, OUT_FORCE_TYPE oftp)
+    {
+        switch (oftp)
+        {
+            case OUT_FORCE_TYPE::None:
+                os << "None";
+                break;
+            case OUT_FORCE_TYPE::AtomForceTotal:
+                os << "Total Atom Force";
+                break;
+            case OUT_FORCE_TYPE::AtomForceNonbonded:
+                os << "Nonbonded Atom Force";
+                break;
+            case OUT_FORCE_TYPE::AtomForceNonbondedBonded:
+                os << "Nonbonded + Bonded Atom Force";
+                break;
+        }
+        return os;
+    }
 
     static inline real real_norm2(const real fx, const real fy, const real fz)
     {
@@ -95,6 +198,11 @@ namespace ForceAnal
     static inline real real_norm(const real fx, const real fy, const real fz)
     {
         return std::sqrt(real_norm2(fx, fy, fz));
+    }
+
+    static inline std::string modfnm(const std::string fnm, const std::string prefix, const std::string suffix)
+    {
+        return prefix + (suffix.empty() ? fnm : (fnm.find_first_of('.') == std::string::npos ? fnm + suffix : fnm.substr(0, fnm.find_first_of('.')) + suffix + fnm.substr(fnm.find_first_of('.'))));
     }
 } // ForceAnal
 
